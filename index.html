@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BRANGKAS ESPORT — RFMS Management</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+/* BRANGKAS ESPORT - Position based access */
+const BRANGKAS_ROLE_ACCESS = {
+  petinggi: ['dashboard','products','sales','employees','settings','bookkeeping','crafting','payroll'],
+  member: ['dashboard','products','sales']
+};
+const BRANGKAS_RESET_POSITIONS = ['petinggi'];
+
+// Kompatibilitas jabatan lama (owner/co_owner/manager -> petinggi, sisanya -> member)
+function normalizePosition(position){
+  if (position === 'petinggi' || position === 'member') return position;
+  if (['owner','co_owner','manager'].includes(position)) return 'petinggi';
+  return 'member';
+}
+
+function canManageAttendance(profile){
+  return profile && (
+    profile.role === 'admin' ||
+    BRANGKAS_RESET_POSITIONS.includes(normalizePosition(profile.position))
+  );
+}
+function positionPermissions(profile){
+  if (!profile) return [];
+  if (profile.role === 'admin') return ['dashboard','products','sales','employees','settings','bookkeeping','crafting','payroll'];
+  return BRANGKAS_ROLE_ACCESS[normalizePosition(profile.position)] || ['dashboard'];
+}
+
+
+const BRANGKAS_POSITIONS = [
+  {key:'petinggi', label:'Petinggi'},
+  {key:'member', label:'Member'}
+];
+
+function positionLabel(key){
+  const found = BRANGKAS_POSITIONS.find(x => x.key === normalizePosition(key));
+  return found ? found.label : 'Member';
+}
+function positionChip(profile){ return profile ? '<span class="position-chip">'+esc(positionLabel(profile.position))+'</span>' : '<span class="position-chip">-</span>'; }
+
+</script>
+<script>
+function internalEmail(username){const u=String(username||'').trim().toLowerCase();return u.replace(/[^a-z0-9._-]/g,'_')+'@brangkasesport.com';}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050914;--panel:#0b1222;--panel2:#101a2e;--line:#1b2b4a;--blue:#0b7cff;--cyan:#20d9ff;--text:#eef7ff;--muted:#8ea4c4;--green:#35d07f;--red:#ff5d72;--yellow:#ffd166;--shadow:0 18px 50px rgba(0,0,0,.28)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 70% -10%,#0d2d5d 0,transparent 35%),radial-gradient(circle at 0 30%,#071a39 0,transparent 30%),var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;min-height:100vh}.hidden{display:none!important}.app{display:flex;min-height:100vh}.sidebar{width:260px;background:rgba(5,10,22,.88);backdrop-filter:blur(18px);border-right:1px solid var(--line);padding:22px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;overflow:hidden}.logo{width:150px;height:150px;object-fit:contain;display:block;margin:0 auto 8px;filter:drop-shadow(0 0 22px rgba(16,139,255,.35))}.brand{text-align:center;margin-bottom:22px}.brand b{font-family:'Space Grotesk';font-size:20px;letter-spacing:3px}.brand span{display:block;color:var(--cyan);font-size:10px;letter-spacing:4px;margin-top:3px}.nav{display:grid;gap:7px;overflow-y:auto;min-height:0;padding-right:3px;padding-bottom:8px;scrollbar-width:thin}.nav button{border:1px solid transparent;background:transparent;color:var(--muted);padding:12px 13px;border-radius:12px;text-align:left;cursor:pointer;font-weight:600}.nav button:hover,.nav button.active{background:linear-gradient(90deg,rgba(11,124,255,.2),rgba(32,217,255,.07));border-color:#174b83;color:#fff}.nav small{display:block;padding:12px 13px 5px;color:#49617f;font-size:9px;letter-spacing:2px;text-transform:uppercase}.userbox{position:relative;left:auto;right:auto;bottom:auto;margin-top:auto;flex:0 0 auto;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}.userbox strong{display:block}.userbox span{font-size:11px;color:var(--cyan)}.main{flex:1;min-width:0}.top{height:76px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(5,9,20,.65);backdrop-filter:blur(18px);position:sticky;top:0;z-index:10}.top h1{font-family:'Space Grotesk';margin:0;font-size:21px}.clock{text-align:right;color:var(--muted);font-size:11px}.clock b{color:#fff;font-size:13px}.content{padding:28px;max-width:1500px;margin:auto}.view{display:none}.view.active{display:block}.hero{padding:24px;border:1px solid #1b4c80;background:linear-gradient(135deg,rgba(11,124,255,.18),rgba(32,217,255,.04));border-radius:20px;box-shadow:var(--shadow);margin-bottom:20px}.hero h2{font-family:'Space Grotesk';font-size:28px;margin:0 0 6px}.hero p{color:var(--muted);margin:0}.grid{display:grid;gap:16px}.kpis{grid-template-columns:repeat(4,1fr)}.cards3{grid-template-columns:repeat(3,1fr)}.card{background:rgba(11,18,34,.88);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}.label{font-size:10px;color:#6680a2;letter-spacing:2px;text-transform:uppercase}.value{font-family:'Space Grotesk';font-size:28px;margin-top:7px}.value.blue{color:var(--cyan)}.value.green{color:var(--green)}.value.yellow{color:var(--yellow)}.value.red{color:var(--red)}.muted{color:var(--muted)}.row{display:flex;gap:10px;align-items:center;justify-content:space-between}.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px}.btn{border:1px solid #185596;background:linear-gradient(135deg,#0b7cff,#0961c7);color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}.btn.secondary{background:transparent;border-color:var(--line);color:var(--muted)}.btn.success{background:linear-gradient(135deg,#16b968,#0d9150);border-color:#2ccf82}.btn.danger{background:transparent;border-color:#713040;color:#ff8a99}.btn:disabled{opacity:.45;cursor:not-allowed}input,select{background:#07101f;border:1px solid var(--line);color:#fff;border-radius:9px;padding:10px 11px;outline:none}input:focus,select:focus{border-color:#1d86ed}.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.field label{display:block;color:#7087a7;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}.table{width:100%;border-collapse:collapse}.table th{color:#6d85a5;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;text-align:left;padding:12px;border-bottom:1px solid var(--line)}.table td{padding:12px;border-bottom:1px solid rgba(27,43,74,.7);font-size:13px}.badge{padding:4px 8px;border-radius:999px;border:1px solid;font-size:10px;font-weight:700}.on{color:var(--green);border-color:#287c53;background:#103322}.off{color:var(--red);border-color:#733040;background:#32101a}.admin{color:var(--cyan);border-color:#1a5d8b;background:#08243a}.employee{color:#b4c8e4;border-color:#32486a;background:#121e31}.access{display:flex;gap:7px;flex-wrap:wrap}.access span{font-size:10px;border:1px solid var(--line);padding:4px 7px;border-radius:7px;color:#a9c0df}.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:18px;z-index:50}.modalbox{width:min(650px,100%);background:#081121;border:1px solid #21466e;border-radius:18px;padding:20px;box-shadow:var(--shadow)}.modalbox h3{margin-top:0;font-family:'Space Grotesk'}.checkgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:15px 0}.check{border:1px solid var(--line);padding:10px;border-radius:9px;color:#b9c9dd}.check input{width:auto;margin-right:7px}.notice{padding:12px;border:1px solid #6b5522;background:#211b0c;color:#e9d58a;border-radius:10px;font-size:12px}.finance-kpi{border-left:3px solid #1677ff}.cash-positive{color:var(--green)}.cash-negative{color:var(--red)}.txn-in{color:var(--green);font-weight:700}.txn-out{color:var(--red);font-weight:700}.mini{font-size:11px;color:var(--muted)}
+.actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.actions .btn{padding:8px 11px;font-size:12px}
+.material-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px}
+.material-search{min-width:220px;flex:1}
+.material-kpis{grid-template-columns:repeat(3,1fr);margin-bottom:16px}
+.payslip{max-width:520px}
+.payslip-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.payslip-head img{width:52px;height:52px;object-fit:contain}
+.payslip-head b{display:block;font-family:'Space Grotesk';font-size:16px;letter-spacing:2px}
+.payslip-head span{display:block;color:var(--cyan);font-size:10px;letter-spacing:2px;margin-top:2px}
+.payslip-info{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.payslip-table td{padding:10px 4px}
+.payslip-total td{border-top:1px solid var(--line);border-bottom:none;padding-top:12px}
+@media(max-width:720px){.payslip-info{grid-template-columns:repeat(2,1fr)}.material-kpis{grid-template-columns:1fr 1fr}}.login{min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 50% 0,#083a78 0,transparent 35%),var(--bg)}.loginbox{width:min(430px,100%);background:rgba(8,17,33,.92);border:1px solid #1d4c7f;border-radius:22px;padding:30px;box-shadow:var(--shadow);text-align:center}.loginbox .logo{width:130px;height:130px}.loginbox h1{font-family:'Space Grotesk';margin:0}.loginbox p{color:var(--muted);font-size:12px}.loginbox .field{text-align:left;margin-top:12px}.full{width:100%;margin-top:14px}.empty{text-align:center;color:#617897;padding:30px}.mobile-menu{display:none}
+@media(max-width:1000px){.sidebar{width:220px}.kpis{grid-template-columns:repeat(2,1fr)}.cards3{grid-template-columns:1fr 1fr}}@media(max-width:720px){.sidebar{position:fixed;left:-270px;z-index:40;transition:.2s}.sidebar.open{left:0}.mobile-menu{display:block}.top{padding:0 16px}.content{padding:16px}.kpis,.cards3,.formgrid{grid-template-columns:1fr}.table-wrap{overflow:auto}.table{min-width:800px}}
+
+.loginbox-pro{padding:28px 30px 22px;overflow:hidden}.login-brand{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px}.login-brand .logo{width:78px;height:78px;margin:0;filter:drop-shadow(0 0 18px rgba(16,139,255,.45))}.login-brand .brand{margin:0;text-align:left}.login-brand .brand b{font-size:22px}.login-brand .brand span{font-size:9px}.login-title{margin:8px 0 18px}.login-title h1{font-family:'Space Grotesk';font-size:25px;margin:0 0 5px}.login-title p{margin:0;font-size:11px}.login-title b{color:var(--cyan)}.password-wrap{position:relative}.password-wrap input{width:100%;padding-right:44px}.eye-btn{position:absolute;right:5px;top:4px;width:36px;height:34px;border:0;border-radius:8px;background:transparent;color:#7391b7;cursor:pointer}.eye-btn:hover{color:var(--cyan);background:rgba(32,217,255,.07)}.login-options{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:11px}.remember{color:#7890af;display:flex;align-items:center;gap:6px}.remember input{width:auto}.link-btn,.setup-link{border:0;background:none;color:var(--cyan);cursor:pointer;font-size:11px}.link-btn:hover,.setup-link:hover{text-decoration:underline}.login-main{margin-top:15px;padding:12px}.setup-link{display:block;margin:14px auto 0}.login-secure{margin-top:13px;font-size:9px;color:#58718f}.login-msg{min-height:18px;margin-top:9px;font-size:11px}.btn.loading{pointer-events:none;opacity:.7}.loginbox .field{margin-top:11px}
+
+.position-badge{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid rgba(0,180,255,.28);border-radius:999px;font-size:11px;color:#59cfff;background:rgba(0,120,255,.08);margin-top:4px}
+</style>
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/favicon.png">
+
+</head>
+<body>
+<div id="login" class="login"><div class="loginbox loginbox-pro">
+  <div class="login-brand"><img class="logo" src="assets/brangkas-esport.png"><div class="brand"><b>BRANGKAS</b><span>ESPORT</span></div></div>
+  <div class="login-title"><h1>Selamat Datang</h1><p>Masuk ke panel operasional <b>BRANGKAS ESPORT</b></p></div>
+  <div class="field"><label>Member</label><input id="email" type="text" autocomplete="username" placeholder="contoh: brandon"></div>
+  <div class="field password-field"><label>Password</label><div class="password-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="Masukkan password"><button type="button" id="togglePassword" class="eye-btn" aria-label="Tampilkan password">◉</button></div></div>
+  <div class="login-options"><label class="remember"><input id="rememberMe" type="checkbox" checked> Ingat saya</label><button type="button" id="forgotBtn" class="link-btn">Lupa password?</button></div>
+  <button class="btn full login-main" id="loginBtn">MASUK KE DASHBOARD</button>
+  <button class="btn secondary full" id="signupBtn">DAFTAR AKUN</button>
+  <button type="button" class="setup-link" id="setupBtn">⚙ Konfigurasi Supabase</button>
+  <div class="login-secure">🔒 Login aman dengan Supabase Authentication</div>
+  <div id="loginMsg" class="muted login-msg"></div>
+</div></div>
+<div id="app" class="app hidden"><aside id="sidebar" class="sidebar"><img class="logo" src="assets/brangkas-esport.png"><div class="brand"><b>BRANGKAS</b><span>ESPORT</span></div><nav class="nav"><small>OPERASIONAL</small><button data-view="dashboard" class="active">▣ Dashboard</button><small>BRANGKAS ESPORT</small><button data-view="products">▧ Produk & Stok</button><button data-view="materials" data-perm="products">◈ Bahan & Crafting</button><button data-view="sales">▰ Penjualan</button><button data-view="orders" data-perm="sales">🧾 Pesanan</button><small>MANAGEMENT</small><button data-view="finance" data-perm="finance">▣ Pembukuan & Kas</button><button data-view="employees" data-perm="employees">♙ Member & Akses</button><button data-view="payroll" data-perm="payroll">💵 Penggajian</button><button data-view="settings" data-perm="settings">⚙ Pengaturan</button></nav><div class="userbox"><strong id="userName">-</strong><span id="userRole">-</span><button class="btn secondary full" id="logoutBtn">KELUAR</button></div></aside>
+<main class="main"><header class="top"><div class="row"><button class="btn secondary mobile-menu" id="menuBtn">☰</button><h1 id="pageTitle">Dashboard</h1></div><div class="clock"><b id="clockTime">--:--:--</b><span id="clockDate">-</span></div></header><div class="content">
+<section id="dashboard" class="view active"><div class="hero"><h2>BRANGKAS ESPORT</h2><p>Panel operasional Brangkas Esport dengan penjualan, stok, dan kontrol akses Member.</p></div><div class="grid kpis" style="grid-template-columns:repeat(2,1fr)"><div class="card"><div class="label">Penjualan Hari Ini</div><div class="value yellow" id="kpiSales">Rp0</div></div><div class="card"><div class="label">Total Produk</div><div class="value blue" id="kpiProdukTotal">0</div></div></div><div class="grid cards3" style="margin-top:16px"><div class="card"><h3>Aktivitas Terbaru</h3><div id="recentActivity"></div></div><div class="card"><h3>Akses Akun</h3><div id="myAccess"></div></div></div></section>
+
+
+<section id="products" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Produk & Stok</h2><p class="muted">Kelola Brangkas</p></div><div class="toolbar" style="margin:0"><button class="btn" id="addProductBtn" data-perm="products">+ PRODUK</button><button class="btn success" id="stockInBtn" data-perm="products">+ BARANG MASUK</button><button class="btn danger" id="stockOutBtn" data-perm="products">− BARANG KELUAR</button></div></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Produk</th><th>Brand</th><th>Harga</th><th>Stok</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="productRows"></tbody></table></div></div><div class="card" style="margin-top:16px"><div class="row"><div><h3>Riwayat Barang Masuk & Keluar</h3><p class="muted">Setiap pergerakan stok dicatat dengan keterangan manual.</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Waktu</th><th>Produk</th><th>Jenis</th><th>Qty</th><th>Keterangan</th><th>Petugas</th></tr></thead><tbody id="stockMovementRows"></tbody></table></div></div></section>
+<section id="materials" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Bahan & Crafting</h2><p class="muted">Kelola stock bahan baku. Saat crafting berhasil, bahan otomatis berkurang dan stock produk otomatis bertambah.</p></div></div><div class="grid kpis material-kpis"><div class="card"><div class="label">Total Bahan</div><div class="value blue" id="matKpiTotal">0</div></div><div class="card"><div class="label">Bahan Habis</div><div class="value red" id="matKpiEmpty">0</div></div><div class="card"><div class="label">Nilai Stock Bahan</div><div class="value green" id="matKpiValue">Rp0</div></div></div><div class="grid cards3"><div class="card" style="grid-column:span 2"><div class="material-toolbar"><h3 style="margin:0">Stock Bahan</h3><div class="row" style="gap:8px"><input id="materialSearch" class="material-search" placeholder="Cari bahan..."><button class="btn secondary" id="addMaterialBtn" data-perm="products">+ BAHAN</button><button class="btn secondary" id="buyMaterialBtn" data-perm="products">🛒 BELI</button></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Bahan</th><th>Harga</th><th>Stock</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="materialRows"></tbody></table></div></div><div class="card"><div class="row" style="margin-bottom:10px"><h3 style="margin:0">Resep Crafting</h3><div class="row" style="gap:8px;width:auto"><button class="btn secondary" id="manageRecipeBtn" data-perm="products">⚙ ATUR RESEP</button><button class="btn" id="craftBtn" data-perm="products">⚒ CRAFT</button></div></div><p class="muted">1x craft menghasilkan 1 unit produk dan otomatis mengurangi bahan.</p><div id="recipeList"></div></div></div></section>
+<section id="sales" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Penjualan</h2><p class="muted">Input transaksi penjualan Brangkas Esport.</p></div><button class="btn" id="addSaleBtn" data-perm="sales">+ PENJUALAN</button></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Waktu</th><th>Produk</th><th>Qty</th><th>Total</th><th>Keterangan</th><th>Kasir</th></tr></thead><tbody id="saleRows"></tbody></table></div></div></section>
+<section id="orders" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Pesanan</h2><p class="muted">Buat pesanan dengan keterangan. Saat pesanan diselesaikan, stok otomatis berkurang dan langsung tercatat di Pembukuan & Kas.</p></div><button class="btn" id="addOrderBtn" data-perm="sales">+ PESANAN</button></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Waktu</th><th>Produk</th><th>Qty</th><th>Pelanggan</th><th>Keterangan</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="orderRows"></tbody></table></div></div></section>
+<section id="finance" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Pembukuan & Kas</h2><p class="muted">Catat deposit, withdraw, pemasukan penjualan, dan pantau total kas.</p></div><div class="toolbar" style="margin:0"><button class="btn success" id="depositBtn" data-perm="finance">+ DEPOSIT</button><button class="btn danger" id="withdrawBtn" data-perm="finance">− WITHDRAW</button></div></div><div class="grid kpis"><div class="card finance-kpi"><div class="label">Total Pemasukan</div><div class="value green" id="financeIncome">Rp0</div><div class="mini">Penjualan + deposit</div></div><div class="card finance-kpi"><div class="label">Total Withdraw</div><div class="value red" id="financeWithdraw">Rp0</div><div class="mini">Pengeluaran kas</div></div><div class="card finance-kpi"><div class="label">Total Kas</div><div class="value blue" id="financeCash">Rp0</div><div class="mini">Pemasukan − withdraw − bahan − gaji</div></div><div class="card finance-kpi"><div class="label">Penjualan</div><div class="value yellow" id="financeSales">Rp0</div><div class="mini">Pemasukan dari transaksi</div></div><div class="card finance-kpi"><div class="label">Pembelian Bahan</div><div class="value red" id="financePurchase">Rp0</div><div class="mini">Pengeluaran untuk bahan baku</div></div><div class="card finance-kpi"><div class="label">Gaji Karyawan</div><div class="value red" id="financePayroll">Rp0</div><div class="mini">Pengeluaran penggajian</div></div></div><div class="card" style="margin-top:16px"><div class="row"><div><h3>Riwayat Pembukuan</h3><p class="muted">Semua perubahan kas tercatat di sini.</p></div><button class="btn secondary" id="refreshFinance">REFRESH</button></div><div class="table-wrap"><table class="table"><thead><tr><th>Waktu</th><th>Jenis</th><th>Nominal</th><th>Keterangan</th><th>Petugas</th></tr></thead><tbody id="financeRows"></tbody></table></div></div><div class="card" style="margin-top:16px"><div class="row" style="margin-bottom:16px"><div><h3>Arus Kas Kotor</h3><p class="muted">Uang masuk yang dicatat manual dulu (kas kotor) sebelum resmi dipindahkan ke Kas Bersih.</p></div><button class="btn" id="addDirtyCashBtn" data-perm="finance">+ CATAT KAS KOTOR</button></div><div class="grid kpis" style="grid-template-columns:repeat(2,1fr)"><div class="card finance-kpi"><div class="label">Kas Kotor Belum Dibersihkan</div><div class="value yellow" id="dirtyCashTotal">Rp0</div></div><div class="card finance-kpi"><div class="label">Sudah Dipindahkan ke Kas Bersih</div><div class="value green" id="dirtyCashCleared">Rp0</div></div></div><div class="table-wrap" style="margin-top:12px"><table class="table"><thead><tr><th>Waktu</th><th>Nominal</th><th>Keterangan</th><th>Status</th><th>Petugas</th><th>Aksi</th></tr></thead><tbody id="dirtyCashRows"></tbody></table></div></div></section><section id="employees" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Member & Akses</h2><p class="muted">Admin dapat mengatur role dan fitur yang boleh dibuka member.</p></div><button class="btn" id="addEmployeeBtn">+ MEMBER</button></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Nama</th><th>Email</th><th>Jabatan</th><th>Role</th><th>Akses</th><th>Aksi</th></tr></thead><tbody id="employeeRows"></tbody></table></div></div></section>
+<section id="payroll" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Penggajian</h2><p class="muted">Buat slip gaji karyawan. Saat slip dibayar, pengeluaran otomatis tercatat di Pembukuan & Kas.</p></div><button class="btn" id="addPayrollBtn" data-perm="payroll">+ BUAT SLIP GAJI</button></div><div class="grid kpis"><div class="card"><div class="label">Slip Draft</div><div class="value blue" id="payrollDraftCount">0</div></div><div class="card"><div class="label">Sudah Dibayar</div><div class="value green" id="payrollPaidCount">0</div></div><div class="card"><div class="label">Total Draft</div><div class="value yellow" id="payrollDraftTotal">Rp0</div></div><div class="card"><div class="label">Total Dibayar</div><div class="value red" id="payrollPaidTotal">Rp0</div></div></div><div class="card" style="margin-top:16px"><div class="table-wrap"><table class="table"><thead><tr><th>Karyawan</th><th>Jabatan</th><th>Periode</th><th>Gaji Pokok</th><th>Tunjangan+Bonus</th><th>Potongan</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="payrollRows"></tbody></table></div></div></section>
+<section id="settings" class="view"><div class="card"><h2>Pengaturan</h2><p class="muted">Konfigurasi dasar dashboard Brangkas Esport.</p><div class="notice">Gunakan Supabase Auth untuk akun. Role dan akses disimpan di tabel <b>profiles</b> dengan RLS sehingga Member tidak dapat mengubah aksesnya sendiri.</div><div class="formgrid" style="margin-top:16px"><div class="field"><label>Nama Perusahaan</label><input id="companyName" value="BRANGKAS ESPORT"></div><div class="field"><label>Jenis Usaha</label><input value="RFMS" disabled></div></div></div></section>
+</div></main></div>
+<div id="modal" class="modal hidden"><div class="modalbox"><div id="modalContent"></div></div></div>
+<script>
+const S = {
+  sb: null,
+  user: null,
+  profile: null,
+  products: [],
+  materials: [],
+  recipes: [],
+  sales: [],
+  orders: [],
+  payroll: [],
+  profiles: [],
+  finance: [],
+  stockMovements: [],
+  dirtyCash: []
+};
+const PERMS = [
+  ['dashboard', 'Dashboard'],
+  ['products', 'Produk & Stok'],
+  ['materials', 'Bahan & Crafting'],
+  ['sales', 'Penjualan'],
+  ['employees', 'Member & Akses'],
+  ['finance', 'Pembukuan & Kas'],
+  ['payroll', 'Penggajian'],
+  ['settings', 'Pengaturan']
+];
+const $ = id => document.getElementById(id);
+const rupiah = n => new Intl.NumberFormat('id-ID', {
+  style: 'currency',
+  currency: 'IDR',
+  maximumFractionDigits: 0
+}).format(Number(n) || 0);
+const dateKey = d => {
+  const x = new Date(d);
+  return x.toISOString().slice(0, 10)
+};
+const fmtTime = d => d ? new Date(d).toLocaleTimeString('id-ID', {
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit'
+}) : '-';
+
+function msg(t) {
+  $('loginMsg').textContent = t || ''
+}
+
+function has(p) {
+  return S.profile?.role === 'admin' || S.profile?.permissions?.includes(p) || positionPermissions(S.profile).includes(p)
+}
+
+function showModal(html) {
+  $('modalContent').innerHTML = html;
+  $('modal').classList.remove('hidden')
+}
+
+function closeModal() {
+  $('modal').classList.add('hidden')
+}
+async function init() {
+  const DEFAULT_URL = 'https://wogjrksfyakimxiynarw.supabase.co',
+    DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvZ2pya3NmeWFraW14aXluYXJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0MzU0MTksImV4cCI6MjEwNDAxMTQxOX0.1sMihBprXSTnUnBo9PjqGIqpF_JKrR30ICk_Gh8GEQk';
+  const url = localStorage.getItem('brangkas_supabase_url') || DEFAULT_URL,
+    key = localStorage.getItem('brangkas_supabase_key') || DEFAULT_KEY;
+  if (!url || !key) {
+    msg('Masukkan konfigurasi Supabase di bawah.');
+    showSetup();
+    return
+  }
+  S.sb = window.supabase.createClient(url, key);
+  const {
+    data
+  } = await S.sb.auth.getSession();
+  if (data.session) await boot(data.session.user);
+}
+
+function showSetup() {
+  showModal(`<h3>Konfigurasi Supabase</h3><p class="muted">Masukkan Project URL dan anon/publishable key. Data konfigurasi hanya disimpan di browser ini.</p><div class="field"><label>Project URL</label><input id="setupUrl" placeholder="https://xxxx.supabase.co" value="${esc(localStorage.getItem('brangkas_supabase_url')||'')}"></div><div class="field" style="margin-top:10px"><label>Anon / Publishable Key</label><input id="setupKey" value="${esc(localStorage.getItem('brangkas_supabase_key')||'')}"></div><button class="btn full" onclick="saveSetup()">SIMPAN & HUBUNGKAN</button>`)
+}
+window.saveSetup = () => {
+  const url = $('setupUrl').value.trim(),
+    key = $('setupKey').value.trim();
+  if (!url || !key) return alert('Project URL dan key wajib diisi.');
+  localStorage.setItem('brangkas_supabase_url', url);
+  localStorage.setItem('brangkas_supabase_key', key);
+  closeModal();
+  init()
+};
+async function boot(user) {
+  S.user = user;
+  const {
+    data: p,
+    error
+  } = await S.sb.from('profiles').select('*').eq('id', user.id).single();
+  if (error || !p) {
+    await S.sb.auth.signOut();
+    msg('Akun belum memiliki profile. Admin harus membuat/menyetujui profile Anda.');
+    return
+  }
+  S.profile = p;
+  $('login').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('userName').textContent = p.full_name || user.email;
+  $('userRole').textContent = (p.role || 'employee').toUpperCase();
+  applyAccess();
+  await loadData();
+  renderAll()
+}
+
+function applyAccess() {
+  document.querySelectorAll('[data-perm]').forEach(el => {
+    el.classList.toggle('hidden', !has(el.dataset.perm))
+  });
+  document.querySelectorAll('.nav button[data-view]').forEach(b => {
+    if (b.dataset.perm && !has(b.dataset.perm)) b.classList.add('hidden')
+  })
+}
+async function loadData() {
+  const [pr, ma, re, sa, or_, pr2, ps, fi, sm, dc] = await Promise.all([S.sb.from('products').select('*').order('created_at', {
+    ascending: false
+  }), S.sb.from('materials').select('*').order('name'), S.sb.from('crafting_recipes').select('id,product_id,material_id,qty,products(name),materials(name,stock)').order('product_id'), S.sb.from('sales').select('*').order('sold_at', {
+    ascending: false
+  }).limit(100), S.sb.from('orders').select('*').order('created_at', {
+    ascending: false
+  }).limit(200), S.sb.from('payroll_slips').select('*').order('created_at', {
+    ascending: false
+  }).limit(300), S.sb.from('profiles').select('*').order('full_name'), S.sb.from('finance_transactions').select('*').order('created_at', {
+    ascending: false
+  }).limit(300), S.sb.from('stock_movements').select('*').order('created_at', {
+    ascending: false
+  }).limit(200), S.sb.from('dirty_cash').select('*').order('created_at', {
+    ascending: false
+  }).limit(200)]);
+  S.products = pr.data || [];
+  S.materials = ma.data || [];
+  S.recipes = re.data || [];
+  S.sales = sa.data || [];
+  S.orders = or_.data || [];
+  S.payroll = pr2.data || [];
+  S.profiles = ps.data || [];
+  S.finance = fi.data || [];
+  S.stockMovements = sm.data || [];
+  S.dirtyCash = dc.data || [];
+}
+
+function renderAll() {
+  const today = dateKey(new Date());
+  $('kpiSales').textContent = rupiah(S.sales.filter(s => dateKey(s.sold_at) === today).reduce((x, s) => x + Number(s.total), 0));
+  $('kpiProdukTotal').textContent = S.products.length;
+  renderProducts();
+  renderMaterials();
+  renderSales();
+  renderOrders();
+  renderPayroll();
+  renderEmployees();
+  renderRecent();
+  renderAccess();
+  renderFinance();
+  renderStockMovements();
+  renderDirtyCash()
+}
+
+function renderFinance() {
+  const income = S.finance.filter(x => x.transaction_type === 'sale' || x.transaction_type === 'deposit').reduce((a, x) => a + Number(x.amount || 0), 0);
+  const withdraw = S.finance.filter(x => x.transaction_type === 'withdraw').reduce((a, x) => a + Number(x.amount || 0), 0);
+  const purchase = S.finance.filter(x => x.transaction_type === 'purchase').reduce((a, x) => a + Number(x.amount || 0), 0);
+  const payroll = S.finance.filter(x => x.transaction_type === 'payroll').reduce((a, x) => a + Number(x.amount || 0), 0);
+  const sales = S.finance.filter(x => x.transaction_type === 'sale').reduce((a, x) => a + Number(x.amount || 0), 0);
+  const cash = income - withdraw - purchase - payroll;
+  $('financeIncome').textContent = rupiah(income);
+  $('financeWithdraw').textContent = rupiah(withdraw);
+  $('financeCash').textContent = rupiah(cash);
+  $('financeCash').className = 'value ' + (cash < 0 ? 'red' : 'blue');
+  $('financeSales').textContent = rupiah(sales);
+  $('financePurchase').textContent = rupiah(purchase);
+  $('financePayroll').textContent = rupiah(payroll);
+  $('financeRows').innerHTML = S.finance.map(x => {
+    const isOut = x.transaction_type === 'withdraw' || x.transaction_type === 'purchase' || x.transaction_type === 'payroll';
+    const label = x.transaction_type === 'sale' ? 'PENJUALAN' : x.transaction_type === 'deposit' ? 'DEPOSIT' : x.transaction_type === 'purchase' ? 'BELI BAHAN' : x.transaction_type === 'payroll' ? 'GAJI' : 'WITHDRAW';
+    return `<tr><td>${new Date(x.created_at).toLocaleString('id-ID')}</td><td><span class="badge ${isOut?'off':'on'}">${label}</span></td><td class="${isOut?'txn-out':'txn-in'}">${isOut?'− ':'+ '}${rupiah(x.amount)}</td><td>${esc(x.description||'-')}</td><td>${esc(x.created_by_name||'-')}</td></tr>`
+  }).join('') || `<tr><td colspan="5" class="empty">Belum ada transaksi pembukuan.</td></tr>`
+}
+
+function renderDirtyCash() {
+  if (!$('dirtyCashRows')) return;
+  const belum = S.dirtyCash.filter(d => d.status === 'kotor');
+  const totalKotor = belum.reduce((a, d) => a + Number(d.amount || 0), 0);
+  const totalBersihkan = S.dirtyCash.filter(d => d.status === 'bersih').reduce((a, d) => a + Number(d.amount || 0), 0);
+  if ($('dirtyCashTotal')) $('dirtyCashTotal').textContent = rupiah(totalKotor);
+  if ($('dirtyCashCleared')) $('dirtyCashCleared').textContent = rupiah(totalBersihkan);
+  $('dirtyCashRows').innerHTML = S.dirtyCash.map(d => `<tr><td>${new Date(d.created_at).toLocaleString('id-ID')}</td><td>${rupiah(d.amount)}</td><td>${esc(d.keterangan||'-')}</td><td><span class="badge ${d.status==='bersih'?'on':'off'}">${d.status==='bersih'?'BERSIH':'KOTOR'}</span></td><td>${esc(d.created_by_name||'-')}</td><td>${d.status==='kotor'&&has('finance')?`<button class="btn success" onclick="clearDirtyCash('${d.id}')">BERSIHKAN</button>`:'-'}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">Belum ada catatan kas kotor.</td></tr>`
+}
+
+function renderProducts() {
+  $('productRows').innerHTML = S.products.map(p => `<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.brand||'-')}</td><td>${rupiah(p.price)}</td><td>${p.stock}</td><td><span class="badge ${p.stock>0?'on':'off'}">${p.stock>0?'TERSEDIA':'HABIS'}</span></td><td>${has('products')?`<button class="btn secondary" onclick="editProduct('${p.id}')">EDIT</button>`:''}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">Belum ada produk.</td></tr>`
+}
+
+function stockMovement(type) {
+  const title = type === 'masuk' ? 'Barang Masuk' : 'Barang Keluar';
+  showModal(`<h3>${title}</h3><div class="formgrid"><div class="field"><label>Produk</label><select id="smpid">${S.products.map(p=>`<option value="${p.id}">${esc(p.name)} (stok ${p.stock})</option>`).join('')}</select></div><div class="field"><label>Qty</label><input id="smqty" type="number" min="1" value="1"></div></div><div class="field" style="margin-top:10px"><label>Keterangan</label><input id="smnote" placeholder="Tulis manual, contoh: restock dari supplier / rusak / retur"></div><div class="notice" style="margin-top:12px">${type==='masuk'?'Stock produk akan otomatis bertambah.':'Stock produk akan otomatis berkurang.'}</div><button class="btn full" onclick="saveStockMovement('${type}')">SIMPAN</button>`)
+}
+window.saveStockMovement = async type => {
+  const pid = $('smpid').value,
+    qty = Number($('smqty').value),
+    keterangan = $('smnote').value.trim();
+  if (!pid) return alert('Pilih produk.');
+  if (!Number.isInteger(qty) || qty < 1) return alert('Qty harus minimal 1.');
+  if (!keterangan) return alert('Keterangan wajib diisi.');
+  const {
+    data,
+    error
+  } = await S.sb.rpc('record_stock_movement', {
+    p_product_id: pid,
+    p_type: type,
+    p_qty: qty,
+    p_keterangan: keterangan
+  });
+  if (error) return alert(error.message);
+  closeModal();
+  await loadData();
+  renderAll();
+  alert(data || 'Berhasil dicatat.')
+}
+
+function renderStockMovements() {
+  if (!$('stockMovementRows')) return;
+  $('stockMovementRows').innerHTML = S.stockMovements.map(m => `<tr><td>${new Date(m.created_at).toLocaleString('id-ID')}</td><td><b>${esc(m.product_name)}</b></td><td><span class="badge ${m.movement_type==='masuk'?'on':'off'}">${m.movement_type==='masuk'?'MASUK':'KELUAR'}</span></td><td>${m.qty}</td><td>${esc(m.keterangan||'-')}</td><td>${esc(m.created_by_name||'-')}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">Belum ada catatan keluar/masuk barang.</td></tr>`
+}
+
+function renderMaterials() {
+  const groups = {};
+  S.recipes.forEach(r => {
+    const name = r.products?.name || '-';
+    (groups[r.product_id] ??= []).push(r)
+  });
+  const q = ($('materialSearch')?.value || '').trim().toLowerCase();
+  const list = q ? S.materials.filter(m => m.name.toLowerCase().includes(q)) : S.materials;
+  $('matKpiTotal').textContent = S.materials.length;
+  $('matKpiEmpty').textContent = S.materials.filter(m => m.stock <= 0).length;
+  $('matKpiValue').textContent = rupiah(S.materials.reduce((a, m) => a + Number(m.stock || 0) * Number(m.price || 0), 0));
+  $('materialRows').innerHTML = list.map(m => `<tr><td><b>${esc(m.name)}</b></td><td>${rupiah(m.price)}</td><td><b>${m.stock}</b></td><td><span class="badge ${m.stock>0?'on':'off'}">${m.stock>0?'TERSEDIA':'HABIS'}</span></td><td>${has('products')?`<div class="actions"><button class="btn secondary" onclick="buyMaterial('${m.id}')">BELI</button><button class="btn secondary" onclick="addMaterialStock('${m.id}')">+ STOCK</button><button class="btn secondary" onclick="editMaterial('${m.id}')">EDIT</button></div>`:''}</td></tr>`).join('') || `<tr><td colspan="5" class="empty">${q?'Tidak ada bahan yang cocok.':'Belum ada bahan.'}</td></tr>`;
+  const names = Object.entries(groups).map(([pid, items]) => `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div class="row"><b>${esc(items[0]?.products?.name||'-')}</b>${has('products')?`<button class="btn secondary" onclick="editRecipeFor('${pid}')">EDIT</button>`:''}</div><div class="access" style="margin-top:7px">${items.map(r=>`<span>${esc(r.materials?.name||'-')} × ${r.qty}</span>`).join('')}</div></div>`).join('');
+  $('recipeList').innerHTML = names || '<div class="empty">Belum ada resep.</div>'
+}
+$('materialSearch')?.addEventListener('input', renderMaterials);
+
+function renderSales() {
+  $('saleRows').innerHTML = S.sales.slice(0, 50).map(s => `<tr><td>${new Date(s.sold_at).toLocaleString('id-ID')}</td><td>${esc(s.product_name)}</td><td>${s.qty}</td><td>${rupiah(s.total)}</td><td>${esc(s.keterangan||'-')}</td><td>${esc(s.cashier_name||'-')}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">Belum ada penjualan.</td></tr>`
+}
+
+function orderStatusBadge(status) {
+  if (status === 'selesai') return '<span class="badge on">SELESAI</span>';
+  if (status === 'batal') return '<span class="badge off">BATAL</span>';
+  return '<span class="badge admin">PENDING</span>'
+}
+
+function renderOrders() {
+  $('orderRows').innerHTML = S.orders.map(o => `<tr><td>${new Date(o.created_at).toLocaleString('id-ID')}</td><td><b>${esc(o.product_name)}</b></td><td>${o.qty}</td><td>${esc(o.customer_name||'-')}</td><td>${esc(o.keterangan||'-')}</td><td>${rupiah(o.total)}</td><td>${orderStatusBadge(o.status)}</td><td>${o.status==='pending'&&has('sales')?`<div class="actions"><button class="btn success" onclick="completeOrder('${o.id}')">SELESAIKAN</button> <button class="btn danger" onclick="cancelOrder('${o.id}')">BATAL</button></div>`:'-'}</td></tr>`).join('') || `<tr><td colspan="8" class="empty">Belum ada pesanan.</td></tr>`
+}
+
+function addOrder() {
+  showModal(`<h3>Buat Pesanan</h3><div class="formgrid"><div class="field"><label>Produk</label><select id="opid">${S.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${rupiah(p.price)} (stok ${p.stock})</option>`).join('')}</select></div><div class="field"><label>Qty</label><input id="oqty" type="number" value="1" min="1"></div><div class="field"><label>Nama Pelanggan</label><input id="ocust" placeholder="Opsional"></div><div class="field"><label>Keterangan</label><input id="onote" placeholder="Contoh: garansi, request warna, dll"></div></div><div class="notice" style="margin-top:12px">Pesanan dibuat dengan status PENDING dan belum mengurangi stok. Stok baru berkurang dan kas baru bertambah saat pesanan ditekan SELESAIKAN.</div><button class="btn full" onclick="saveNewOrder()">SIMPAN PESANAN</button>`)
+}
+window.saveNewOrder = async () => {
+  const pid = $('opid').value,
+    qty = Number($('oqty').value),
+    customer = $('ocust').value.trim(),
+    note = $('onote').value.trim();
+  if (!pid) return alert('Pilih produk.');
+  if (!Number.isInteger(qty) || qty < 1) return alert('Qty harus minimal 1.');
+  const {
+    data,
+    error
+  } = await S.sb.rpc('create_order', {
+    p_product_id: pid,
+    p_qty: qty,
+    p_keterangan: note,
+    p_customer_name: customer
+  });
+  if (error) return alert(error.message);
+  closeModal();
+  await loadData();
+  renderAll();
+  alert('Pesanan berhasil dibuat dengan status PENDING.')
+}
+window.completeOrder = async id => {
+  const o = S.orders.find(x => x.id === id);
+  if (!o) return;
+  if (!confirm(`Selesaikan pesanan ${o.product_name} x${o.qty}? Stok akan berkurang dan kas akan bertambah ${rupiah(o.total)}.`)) return;
+  const {
+    data,
+    error
+  } = await S.sb.rpc('complete_order', {
+    p_order_id: id
+  });
+  if (error) return alert(error.message);
+  await loadData();
+  renderAll();
+  alert(data || 'Pesanan berhasil diselesaikan.')
+}
+window.cancelOrder = async id => {
+  if (!confirm('Batalkan pesanan ini?')) return;
+  const {
+    data,
+    error
+  } = await S.sb.rpc('cancel_order', {
+    p_order_id: id
+  });
+  if (error) return alert(error.message);
+  await loadData();
+  renderAll()
+}
+
+function payrollStatusBadge(status) {
+  if (status === 'paid') return '<span class="badge on">DIBAYAR</span>';
+  if (status === 'batal') return '<span class="badge off">BATAL</span>';
+  return '<span class="badge admin">DRAFT</span>'
+}
+
+function currentPeriod() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+}
+
+function renderPayroll() {
+  const draft = S.payroll.filter(p => p.status === 'draft');
+  const paid = S.payroll.filter(p => p.status === 'paid');
+  $('payrollDraftCount').textContent = draft.length;
+  $('payrollPaidCount').textContent = paid.length;
+  $('payrollDraftTotal').textContent = rupiah(draft.reduce((a, p) => a + Number(p.total || 0), 0));
+  $('payrollPaidTotal').textContent = rupiah(paid.reduce((a, p) => a + Number(p.total || 0), 0));
+  $('payrollRows').innerHTML = S.payroll.map(p => `<tr><td><b>${esc(p.employee_name)}</b></td><td>${positionLabel(p.position)}</td><td>${esc(p.period)}</td><td>${rupiah(p.base_salary)}</td><td>${rupiah(Number(p.allowance||0)+Number(p.bonus||0))}</td><td>${rupiah(p.deduction)}</td><td><b>${rupiah(p.total)}</b></td><td>${payrollStatusBadge(p.status)}</td><td><div class="actions"><button class="btn secondary" onclick="viewPayslip('${p.id}')">LIHAT SLIP</button>${p.status==='draft'&&has('payroll')?`<button class="btn success" onclick="payPayrollSlip('${p.id}')">BAYAR</button><button class="btn danger" onclick="cancelPayrollSlip('${p.id}')">BATAL</button>`:''}</div></td></tr>`).join('') || `<tr><td colspan="9" class="empty">Belum ada slip gaji.</td></tr>`
+}
+
+function addPayrollSlip() {
+  showModal(`<h3>Buat Slip Gaji</h3><div class="formgrid"><div class="field"><label>Karyawan</label><select id="pgemp">${S.profiles.map(e=>`<option value="${e.id}">${esc(e.full_name||e.email)} — ${positionLabel(e.position)}</option>`).join('')}</select></div><div class="field"><label>Periode</label><input id="pgperiod" type="month" value="${currentPeriod()}"></div><div class="field"><label>Gaji Pokok</label><input id="pgbase" type="number" min="0" value="0"></div><div class="field"><label>Tunjangan</label><input id="pgallow" type="number" min="0" value="0"></div><div class="field"><label>Bonus</label><input id="pgbonus" type="number" min="0" value="0"></div><div class="field"><label>Potongan</label><input id="pgded" type="number" min="0" value="0"></div></div><div class="field" style="margin-top:10px"><label>Catatan</label><input id="pgnote" placeholder="Opsional"></div><div id="payrollPreview" class="notice" style="margin-top:12px"></div><button class="btn full" onclick="saveNewPayrollSlip()">SIMPAN SLIP (DRAFT)</button>`);
+  const update = () => {
+    const total = Math.max(0, Number($('pgbase').value || 0) + Number($('pgallow').value || 0) + Number($('pgbonus').value || 0) - Number($('pgded').value || 0));
+    $('payrollPreview').innerHTML = `Total gaji diterima: <b>${rupiah(total)}</b>. Slip dibuat sebagai DRAFT dan belum memotong kas sampai ditekan BAYAR.`
+  };
+  ['pgbase', 'pgallow', 'pgbonus', 'pgded'].forEach(id => $(id).oninput = update);
+  update()
+}
+window.saveNewPayrollSlip = async () => {
+  const employee_id = $('pgemp').value,
+    period = $('pgperiod').value,
+    base = Number($('pgbase').value || 0),
+    allow = Number($('pgallow').value || 0),
+    bonus = Number($('pgbonus').value || 0),
+    ded = Number($('pgded').value || 0),
+    notes = $('pgnote').value.trim();
+  if (!employee_id) return alert('Pilih karyawan.');
+  if (!period) return alert('Pilih periode.');
+  if (base < 0 || allow < 0 || bonus < 0 || ded < 0) return alert('Nominal tidak boleh negatif.');
+  const {
+    data,
+    error
+  } = await S.sb.rpc('create_payroll_slip', {
+    p_employee_id: employee_id,
+    p_period: period,
+    p_base_salary: base,
+    p_allowance: allow,
+    p_bonus: bonus,
+    p_deduction: ded,
+    p_notes: notes
+  });
+  if (error) return alert(error.message);
+  closeModal();
+  await loadData();
+  renderAll();
+  viewPayslip(data)
+}
+window.payPayrollSlip = async id => {
+  const p = S.payroll.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`Bayar gaji ${p.employee_name} periode ${p.period} sebesar ${rupiah(p.total)}? Kas akan otomatis berkurang.`)) return;
+  const {
+    data,
+    error
+  } = await S.sb.rpc('pay_payroll_slip', {
+    p_slip_id: id
+  });
+  if (error) return alert(error.message);
+  await loadData();
+  renderAll();
+  alert(data || 'Gaji berhasil dibayar.')
+}
+window.cancelPayrollSlip = async id => {
+  if (!confirm('Batalkan slip gaji ini?')) return;
+  const {
+    data,
+    error
+  } = await S.sb.rpc('cancel_payroll_slip', {
+    p_slip_id: id
+  });
+  if (error) return alert(error.message);
+  await loadData();
+  renderAll()
+}
+window.viewPayslip = id => {
+  const p = S.payroll.find(x => x.id === id);
+  if (!p) return;
+  showModal(`<div class="payslip"><div class="payslip-head"><img src="assets/brangkas-esport.png"><div><b>BRANGKAS ESPORT</b><span>SLIP GAJI KARYAWAN</span></div></div><div class="payslip-info"><div><span class="mini">Nama Karyawan</span><br><b>${esc(p.employee_name)}</b></div><div><span class="mini">Jabatan</span><br><b>${positionLabel(p.position)}</b></div><div><span class="mini">Periode</span><br><b>${esc(p.period)}</b></div><div><span class="mini">Status</span><br>${payrollStatusBadge(p.status)}</div></div><table class="table payslip-table"><tbody><tr><td>Gaji Pokok</td><td class="txn-in">${rupiah(p.base_salary)}</td></tr><tr><td>Tunjangan</td><td class="txn-in">${rupiah(p.allowance)}</td></tr><tr><td>Bonus</td><td class="txn-in">${rupiah(p.bonus)}</td></tr><tr><td>Potongan</td><td class="txn-out">− ${rupiah(p.deduction)}</td></tr><tr class="payslip-total"><td><b>TOTAL DITERIMA</b></td><td><b>${rupiah(p.total)}</b></td></tr></tbody></table>${p.notes?`<p class="mini">Catatan: ${esc(p.notes)}</p>`:''}<p class="mini">Dibuat oleh ${esc(p.created_by_name||'-')} pada ${new Date(p.created_at).toLocaleString('id-ID')}${p.paid_at?`<br>Dibayar oleh ${esc(p.paid_by_name||'-')} pada ${new Date(p.paid_at).toLocaleString('id-ID')}`:''}</p><div class="row"><button class="btn secondary" onclick="closeModal()">TUTUP</button><button class="btn" onclick="window.print()">CETAK SLIP</button></div></div>`)
+}
+
+function renderEmployees() {
+  $('employeeRows').innerHTML = S.profiles.map(p => `<tr><td><b>${esc(p.full_name||'-')}</b></td><td>${esc(p.email||'-')}</td><td>${positionChip(p)}</td><td><span class="badge ${p.role==='admin'?'admin':'employee'}">${p.role}</span></td><td><div class="access">${(p.permissions||[]).map(x=>`<span>${x}</span>`).join('')||'<span>dashboard</span>'}</div></td><td><button class="btn secondary" onclick="editEmployee('${p.id}')">ATUR AKSES</button></td></tr>`).join('')
+}
+
+function renderRecent() {
+  $('recentActivity').innerHTML = S.sales.slice(0, 4).map(s => `<div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:12px">${esc(s.product_name)} <span class="muted">×${s.qty}</span><br><b>${rupiah(s.total)}</b></div>`).join('') || '<span class="muted">Belum ada aktivitas.</span>'
+}
+
+function renderAccess() {
+  $('myAccess').innerHTML = `<span class="badge ${S.profile.role==='admin'?'admin':'employee'}">${S.profile.role}</span><div class="access" style="margin-top:10px">${(S.profile.permissions||[]).map(x=>`<span>${x}</span>`).join('')}</div>`
+}
+
+function editEmployee(id) {
+  const p = S.profiles.find(x => x.id === id);
+  if (!p) return;
+  const canPosition = canManageAttendance(S.profile);
+  showModal(`<h3>Atur Member — ${esc(p.full_name||p.email)}</h3><div class="formgrid"><div class="field"><label>Role</label><select id="erole"><option value="employee" ${p.role==='employee'?'selected':''}>EMPLOYEE</option><option value="admin" ${p.role==='admin'?'selected':''}>ADMIN</option></select></div><div class="field"><label>Jabatan</label><select id="eposition" ${canPosition?'':'disabled'}>${BRANGKAS_POSITIONS.map(x=>`<option value="${x.key}" ${normalizePosition(p.position)===x.key?'selected':''}>${x.label}</option>`).join('')}</select></div></div><div class="checkgrid">${PERMS.map(([k,n])=>`<label class="check"><input type="checkbox" value="${k}" ${p.permissions?.includes(k)?'checked':''}> ${n}</label>`).join('')}</div>${canPosition?'<div class="notice">Petinggi dapat mengatur jabatan member.</div>':''}<div class="row"><button class="btn secondary" onclick="closeModal()">BATAL</button><button class="btn" onclick="saveEmployee('${id}')">SIMPAN</button></div>`)
+}
+window.saveEmployee = async id => {
+  const role = $('erole').value;
+  const permissions = [...document.querySelectorAll('.check input:checked')].map(x => x.value);
+  const payload = {
+    role,
+    permissions
+  };
+  if (canManageAttendance(S.profile)) payload.position = $('eposition').value;
+  const {
+    error
+  } = await S.sb.from('profiles').update(payload).eq('id', id);
+  if (error) alert(error.message);
+  else {
+    closeModal();
+    await loadData();
+    renderAll()
+  }
+}
+
+function editProduct(id) {
+  const p = S.products.find(x => x.id === id);
+  showModal(`<h3>Edit Produk</h3><div class="formgrid"><div class="field"><label>Nama</label><input id="pn" value="${esc(p.name)}"></div><div class="field"><label>Brand</label><input id="pb" value="${esc(p.brand||'')}"></div><div class="field"><label>Harga</label><input id="pp" type="number" value="${p.price}"></div><div class="field"><label>Stok</label><input id="ps" type="number" value="${p.stock}"></div></div><button class="btn full" onclick="saveProduct('${id}')">SIMPAN</button>`)
+}
+window.saveProduct = async id => {
+  const {
+    error
+  } = await S.sb.from('products').update({
+    name: $('pn').value,
+    brand: $('pb').value,
+    price: Number($('pp').value),
+    stock: Number($('ps').value)
+  }).eq('id', id);
+  if (error) alert(error.message);
+  else {
+    closeModal();
+    await loadData();
+    renderAll()
+  }
+}
+
+function addProduct() {
+  showModal(`<h3>Tambah Produk</h3><div class="formgrid"><div class="field"><label>Nama</label><input id="pn"></div><div class="field"><label>Brand</label><input id="pb"></div><div class="field"><label>Harga</label><input id="pp" type="number"></div><div class="field"><label>Stok</label><input id="ps" type="number" value="1"></div></div><button class="btn full" onclick="saveNewProduct()">TAMBAH</button>`)
+}
+window.saveNewProduct = async () => {
+  const {
+    error
+  } = await S.sb.from('products').insert({
+    name: $('pn').value,
+    brand: $('pb').value,
+    price: Number($('pp').value),
+    stock: Number($('ps').value)
+  });
+  if (error) alert(error.message);
+  else {
+    closeModal();
+    await loadData();
+    renderAll()
+  }
+}
+
+function addSale() {
+  showModal(`<h3>Input Penjualan</h3><div class="formgrid"><div class="field"><label>Produk</label><select id="sp">${S.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${rupiah(p.price)} (stok ${p.stock})</option>`).join('')}</select></div><div class="field"><label>Qty</label><input id="sq" type="number" value="1" min="1"></div></div><div class="field" style="margin-top:10px"><label>Keterangan (opsional)</label><input id="snote" placeholder="Tulis manual, contoh: diskon member / titipan"></div><div class="notice" style="margin-top:12px">Penjualan akan otomatis mengurangi stok produk dan menambah kas/pemasukan.</div><button class="btn full" onclick="saveSale()">SIMPAN PENJUALAN</button>`)
+}
+window.saveSale = async () => {
+  const p = S.products.find(x => x.id === $('sp').value),
+    qty = Number($('sq').value),
+    keterangan = $('snote').value.trim();
+  if (!p || !Number.isInteger(qty) || qty < 1) return alert('Qty harus minimal 1.');
+  if (qty > p.stock) return alert(`Stok ${p.name} hanya ${p.stock}.`);
+  const {
+    data,
+    error
+  } = await S.sb.rpc('record_sale', {
+    p_product_id: p.id,
+    p_qty: qty,
+    p_keterangan: keterangan || null
+  });
+  if (error) return alert(error.message);
+  closeModal();
+  await loadData();
+  renderAll();
+  alert((data || 'Penjualan berhasil.') + '\nKas otomatis bertambah ' + rupiah(p.price * qty) + '.')
+}
+
+function addMaterial() {
+  showModal(`<h3>Tambah Bahan</h3><div class="formgrid"><div class="field"><label>Nama Bahan</label><input id="mn" placeholder="Plastik"></div><div class="field"><label>Stock Awal</label><input id="ms" type="number" min="0" value="0"></div><div class="field"><label>Harga Bahan</label><input id="mp" type="number" min="0" value="0"></div></div><button class="btn full" onclick="saveNewMaterial()">TAMBAH BAHAN</button>`)
+}
+window.saveNewMaterial = async () => {
+  const name = $('mn').value.trim(),
+    stock = Number($('ms').value),
+    price = Number($('mp').value || 0);
+  if (!name) return alert('Nama bahan wajib diisi.');
+  if (price < 0) return alert('Harga tidak boleh negatif.');
+  const {
+    error
+  } = await S.sb.from('materials').insert({
+    name,
+    stock,
+    price
+  });
+  if (error) return alert(error.message);
+  closeModal();
+  await loadData();
+  renderAll()
+}
+window.addMaterialStock = id => {
+  const m = S.materials.find(x => x.id === id);
+  if (!m) return;
+  showModal(`<h3>Tambah Stock Bahan</h3><p class="muted">${esc(m.name)} — stock saat ini <b>${m.stock}</b></p><div class="field"><label>Jumlah Tambahan</label><input id="msa" type="number" min="1" value="1"></div><div class="notice" style="margin-top:12px">Tambah stock manual ini TIDAK mengurangi kas. Gunakan tombol BELI jika ingin stock bertambah sekaligus otomatis mengurangi kas.</div><button class="btn full" onclick="saveMaterialAdd('${id}')">TAMBAH STOCK</button>`)
+};
+window.saveMaterialAdd = async id => {
+  const m = S.materials.find(x => x.id === id),
+    add = Number($('msa').value);
+  if (!m || add < 1) return alert('Jumlah tambahan minimal 1.');
+  const {
+    error
+  } = await S.sb.from('materials').update({
+    stock: m.stock + add
+  }).eq('id', id);
+  if (error) alert(error.message);
+  else {
+    closeModal();
+    await loadData();
+    renderAll()
+  }
+};
+window.editMaterial = id => {
+  const m = S.materials.find(x => x.id === id);
+  if (!m) return;
+  showModal(`<h3>Edit Bahan</h3><p class="muted">${esc(m.name)}</p><div class="formgrid"><div class="field"><label>Stock</label><input id="ms" type="number" min="0" value="${m.stock}"></div><div class="field"><label>Harga Bahan</label><input id="mp" type="number" min="0" value="${m.price||0}"></div></div><button class="btn full" onclick="saveMaterial('${id}')">SIMPAN</button>`)
+}
+window.saveMaterial = async id => {
+  const stock = Number($('ms').value),
+    price = Number($('mp').value || 0);
+  if (stock < 0) return alert('Stock tidak boleh negatif.');
+  if (price < 0) return alert('Harga tidak boleh negatif.');
+  const {
+    error
+  } = await S.sb.from('materials').update({
+    stock,
+    price
+  }).eq('id', id);
+  if (error) alert(error.message);
+  else {
+    closeModal();
+    await loadData();
+    renderAll()
+  }
+}
+
+function buyMaterial(id) {
+  const m = id ? S.materials.find(x => x.id === id) : null;
+  showModal(`<h3>Beli Bahan</h3><div class="formgrid"><div class="field"><label>Bahan</label><select id="bmid">${S.materials.map(x=>`<option value="${x.id}" ${x.id===id?'selected':''}>${esc(x.name)} (stok ${x.stock})</option>`).join('')}</select></div><div class="field"><label>Qty Beli</label><input id="bmq" type="number" min="1" value="1"></div><div class="field"><label>Harga Satuan</label><input id="bmp" type="number" min="0" value="${m?m.price||0:0}"></div><div class="field"><label>Keterangan</label><input id="bmn" placeholder="Opsional"></div></div><div id="buyPreview" class="notice" style="margin-top:12px"></div><button class="btn full" onclick="saveBuyMaterial()">SIMPAN PEMBELIAN</button>`);
+  const updatePreview = () => {
+    const mm = S.materials.find(x => x.id === $('bmid').value);
+    if (mm && !$('bmp').dataset.touched) $('bmp').value = mm.price || 0;
+    const qty = Math.max(1, Math.floor(Number($('bmq').value || 1))),
+      price = Number($('bmp').value || 0);
+    $('buyPreview').innerHTML = `Total belanja: <b>${rupiah(qty*price)}</b>. Stock ${esc(mm?.name||'-')} akan bertambah ${qty}, dan kas otomatis berkurang sesuai total.`
+  };
+  $('bmid').onchange = updatePreview;
+  $('bmq').oninput = updatePreview;
+  $('bmp').oninput = () => {
+    $('bmp').dataset.touched = '1';
+    updatePreview()
+  };
+  updatePreview()
+}
+window.saveBuyMaterial = async () => {
+  const mid = $('bmid').value,
+    qty = Number($('bmq').value),
+    price = Number($('bmp').value),
+    desc = $('bmn').value.trim();
+  if (!mid) return alert('Pilih bahan.');
+  if (!Number.isInteger(qty) || qty < 1) return alert('Qty harus minimal 1.');
+  if (price < 0) return alert('Harga tidak boleh negatif.');
+  const {
+    data,
+    error
+  } = await S.sb.rpc('purchase_material', {
+    p_material_id: mid,
+    p_qty: qty,
+    p_price: price,
+    p_description: desc
+  });
+  if (error) return alert(error.message);
+  closeModal();
+  await loadData();
+  renderAll();
+  alert(data || 'Pembelian berhasil.')
+}
+
+function recipeRowHtml(materialId, qty) {
+  const rid = 'rcp_' + Math.random().toString(36).slice(2, 9);
+  return `<div class="formgrid recipe-row" id="${rid}" style="margin-top:8px;align-items:end"><div class="field"><label>Bahan</label><select class="rcp-material">${S.materials.map(m=>`<option value="${m.id}" ${m.id===materialId?'selected':''}>${esc(m.name)}</option>`).join('')}</select></div><div class="field"><label>Qty</label><input class="rcp-qty" type="number" min="1" value="${qty||1}"></div><button class="btn danger" onclick="document.getElementById('${rid}').remove()">HAPUS</button></div>`
+}
+
+function loadRecipeRows() {
+  const pid = $('rcpid').value;
+  const items = S.recipes.filter(r => r.product_id === pid);
+  $('rcpRows').innerHTML = items.length ? items.map(r => recipeRowHtml(r.material_id, r.qty)).join('') : (S.materials.length ? recipeRowHtml(S.materials[0].id, 1) : '')
+}
+
+function addRecipeRow() {
+  if (!S.materials.length) return alert('Tambahkan bahan terlebih dahulu.');
+  $('rcpRows').insertAdjacentHTML('beforeend', recipeRowHtml(S.materials[0].id, 1))
+}
+
+function manageRecipe() {
+  if (!S.products.length) return alert('Tambahkan produk terlebih dahulu.');
+  if (!S.materials.length) return alert('Tambahkan bahan terlebih dahulu.');
+  showModal(`<h3>Atur Resep Crafting</h3><p class="muted">Pilih produk, lalu tambah/ubah/hapus bahan resepnya. Menyimpan akan menggantikan seluruh resep produk ini.</p><div class="field"><label>Produk</label><select id="rcpid">${S.products.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></div><div id="rcpRows"></div><button class="btn secondary full" onclick="addRecipeRow()" style="margin-top:10px">+ TAMBAH BAHAN</button><button class="btn full" onclick="saveRecipe()" style="margin-top:12px">SIMPAN RESEP</button>`);
+  $('rcpid').onchange = loadRecipeRows;
+  loadRecipeRows()
+}
+window.editRecipeFor = pid => {
+  manageRecipe();
+  $('rcpid').value = pid;
+  loadRecipeRows()
+}
+window.saveRecipe = async () => {
+  const pid = $('rcpid').value;
+  const rows = [...document.querySelectorAll('#rcpRows .recipe-row')];
+  const items = rows.map(row => ({
+    material_id: row.querySelector('.rcp-material').value,
+    qty: Number(row.querySelector('.rcp-qty').value)
+  })).filter(x => x.material_id && x.qty > 0);
+  if (!items.length) return alert('Tambahkan minimal 1 bahan.');
+  const {
+    data,
+    error
+  } = await S.sb.rpc('set_crafting_recipe', {
+    p_product_id: pid,
+    p_items: items
+  });
+  if (error) return alert(error.message);
+  closeModal();
+  await loadData();
+  renderAll();
+  alert(data || 'Resep berhasil disimpan.')
+}
+
+function craftProduct() {
+  const products = S.products.filter(p => S.recipes.some(r => r.product_id === p.id));
+  showModal(`<h3>Craft Produk</h3><p class="muted">Jumlah maksimal otomatis mengikuti stock bahan yang tersedia. Stock bahan tidak akan pernah boleh minus.</p><div class="field"><label>Produk</label><select id="cp">${products.map(p=>`<option value="${p.id}">${esc(p.name)} — stok ${p.stock}</option>`).join('')}</select></div><div class="field" style="margin-top:10px"><label>Jumlah</label><input id="cq" type="number" min="1" value="1"></div><div id="craftPreview" class="notice" style="margin-top:12px"></div><button class="btn full" id="craftSaveBtn" onclick="saveCraft()">BUAT PRODUK</button>`);
+  $('cp').onchange = updateCraftPreview;
+  $('cq').oninput = updateCraftPreview;
+  updateCraftPreview()
+}
+
+function updateCraftPreview() {
+  const pid = $('cp')?.value,
+    q = Math.max(1, Math.floor(Number($('cq')?.value || 1))),
+    rs = S.recipes.filter(r => r.product_id === pid);
+  if (!$('craftPreview')) return;
+  const max = rs.length ? Math.min(...rs.map(r => Math.floor(Number(r.materials?.stock ?? 0) / Number(r.qty)))) : 0;
+  $('cq').max = max > 0 ? max : 1;
+  if (max > 0 && q > max) $('cq').value = max;
+  const qq = Math.max(1, Math.floor(Number($('cq').value || 1)));
+  $('craftPreview').innerHTML = rs.length ? `<b>Maksimal craft: ${max} unit</b><br>${rs.map(r=>{const need=r.qty*qq,stock=Number(r.materials?.stock??0),ok=stock>=need;return `${esc(r.materials?.name||'-')}: <b>${need}</b> / stock ${stock} ${ok?'✓':'✗ TIDAK CUKUP'}`}).join('<br>')}` : 'Produk belum memiliki resep.';
+  if ($('craftSaveBtn')) $('craftSaveBtn').disabled = !rs.length || max < 1 || qq > max
+}
+window.saveCraft = async () => {
+  const pid = $('cp').value,
+    q = Math.max(1, Math.floor(Number($('cq').value || 1)));
+  const rs = S.recipes.filter(r => r.product_id === pid);
+  const max = rs.length ? Math.min(...rs.map(r => Math.floor(Number(r.materials?.stock ?? 0) / Number(r.qty)))) : 0;
+  if (!pid || q < 1) return alert('Pilih produk dan jumlah.');
+  if (max < q) return alert(`Stock bahan hanya cukup untuk ${Math.max(0,max)} unit. Craft tidak dapat dilanjutkan.`);
+  const {
+    data,
+    error
+  } = await S.sb.rpc('craft_product', {
+    p_product_id: pid,
+    p_qty: q
+  });
+  if (error) return alert(error.message);
+  closeModal();
+  await loadData();
+  renderAll();
+  const made = S.products.find(p => p.id === pid);
+  alert((data || 'Craft berhasil.') + '\nStock produk sekarang: ' + (made?.stock ?? '?') + ' unit.\nStock bahan telah otomatis dikurangi.')
+}
+
+function cashTransaction(type) {
+  const title = type === 'deposit' ? 'Tambah Deposit' : 'Withdraw Kas';
+  const action = type === 'deposit' ? 'SIMPAN DEPOSIT' : 'SIMPAN WITHDRAW';
+  showModal(`<h3>${title}</h3><div class="field"><label>Nominal</label><input id="cashAmount" type="number" min="1" step="1" placeholder="500000"></div><div class="field" style="margin-top:10px"><label>Keterangan</label><input id="cashDesc" placeholder="Contoh: Modal awal / pembelian kebutuhan Brangkas"></div><div class="notice" style="margin-top:12px">${type==='deposit'?'Deposit menambah kas dan total pemasukan.':'Withdraw mengurangi kas dan tercatat sebagai pengeluaran.'}</div><button class="btn full" onclick="saveCashTransaction('${type}')">${action}</button>`)
+}
+window.saveCashTransaction = async type => {
+  const amount = Math.floor(Number($('cashAmount').value || 0)),
+    description = $('cashDesc').value.trim();
+  if (amount < 1) return alert('Nominal harus lebih dari 0.');
+  if (!description) return alert('Keterangan wajib diisi.');
+  const {
+    data,
+    error
+  } = await S.sb.rpc('cash_transaction', {
+    p_type: type,
+    p_amount: amount,
+    p_description: description
+  });
+  if (error) return alert(error.message);
+  closeModal();
+  await loadData();
+  renderAll();
+  alert(data || 'Transaksi berhasil dicatat.')
+}
+
+function addDirtyCash() {
+  showModal(`<h3>Catat Kas Kotor</h3><p class="muted">Uang masuk yang belum resmi tercatat di Kas Bersih. Tekan BERSIHKAN nanti untuk memindahkannya ke Kas Bersih.</p><div class="field"><label>Nominal</label><input id="dcAmount" type="number" min="1" step="1" placeholder="500000"></div><div class="field" style="margin-top:10px"><label>Keterangan</label><input id="dcDesc" placeholder="Tulis manual, contoh: hasil rental PS belum disetor"></div><button class="btn full" onclick="saveDirtyCash()">SIMPAN KAS KOTOR</button>`)
+}
+window.saveDirtyCash = async () => {
+  const amount = Math.floor(Number($('dcAmount').value || 0)),
+    keterangan = $('dcDesc').value.trim();
+  if (amount < 1) return alert('Nominal harus lebih dari 0.');
+  if (!keterangan) return alert('Keterangan wajib diisi.');
+  const {
+    data,
+    error
+  } = await S.sb.rpc('add_dirty_cash', {
+    p_amount: amount,
+    p_keterangan: keterangan
+  });
+  if (error) return alert(error.message);
+  closeModal();
+  await loadData();
+  renderAll();
+  alert(data || 'Kas kotor berhasil dicatat.')
+}
+window.clearDirtyCash = async id => {
+  if (!confirm('Pindahkan kas kotor ini ke Kas Bersih?')) return;
+  const {
+    data,
+    error
+  } = await S.sb.rpc('clear_dirty_cash', {
+    p_id: id
+  });
+  if (error) return alert(error.message);
+  await loadData();
+  renderAll();
+  alert(data || 'Kas kotor berhasil dibersihkan.')
+}
+
+function addEmployee() {
+  showModal(`<h3>Buat Akun Member</h3><div class="formgrid"><div class="field"><label>Nama Member</label><input id="newFullName" placeholder="Nama lengkap"></div><div class="field"><label>Username</label><input id="newUsername" placeholder="username"></div><div class="field"><label>Jabatan</label><select id="newPosition">${BRANGKAS_POSITIONS.map(x=>`<option value="${x.key}">${x.label}</option>`).join('')}</select></div><div class="field"><label>Role</label><select id="newRole"><option value="employee">EMPLOYEE</option><option value="admin">ADMIN</option></select></div></div><p class="muted" style="margin-top:12px">Username, password, dan pembuatan akun Auth tetap mengikuti flow Supabase yang digunakan server ini. Jabatan yang dipilih di sini menjadi acuan saat profile akun sudah tersedia.</p><div class="notice">Jabatan dapat diubah lagi oleh Petinggi dari menu Member & Akses.</div><button class="btn full" onclick="closeModal()">SIMPAN FORM</button>`)
+}
+
+function esc(x) {
+  return String(x ?? '').replace(/[&<>"']/g, m => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  } [m]))
+}
+$('addProductBtn').onclick = addProduct;
+$('stockInBtn').onclick = () => stockMovement('masuk');
+$('stockOutBtn').onclick = () => stockMovement('keluar');
+$('addMaterialBtn').onclick = addMaterial;
+$('buyMaterialBtn').onclick = () => buyMaterial(null);
+$('craftBtn').onclick = craftProduct;
+$('manageRecipeBtn').onclick = manageRecipe;
+$('addSaleBtn').onclick = addSale;
+$('addOrderBtn').onclick = addOrder;
+$('depositBtn').onclick = () => cashTransaction('deposit');
+$('withdrawBtn').onclick = () => cashTransaction('withdraw');
+$('addDirtyCashBtn').onclick = addDirtyCash;
+$('refreshFinance').onclick = async () => {
+  await loadData();
+  renderAll()
+};
+$('addEmployeeBtn').onclick = addEmployee;
+$('addPayrollBtn').onclick = addPayrollSlip;
+$('logoutBtn').onclick = async () => {
+  await S.sb.auth.signOut();
+  location.reload()
+};
+
+function setLoginLoading(on, text) {
+  const b = $('loginBtn');
+  b.disabled = on;
+  b.classList.toggle('loading', on);
+  b.textContent = on ? (text || 'MEMPROSES...') : 'MASUK KE DASHBOARD'
+}
+$('loginBtn').onclick = async () => {
+  const email = $('email').value.trim(),
+    password = $('password').value;
+  if (!email || !password) return msg('Email dan password wajib diisi.');
+  if (!S.sb) return msg('Supabase belum dikonfigurasi.');
+  setLoginLoading(true);
+  const {
+    data,
+    error
+  } = await S.sb.auth.signInWithPassword({
+    email: internalEmail(email),
+    password
+  });
+  setLoginLoading(false);
+  if (error) {
+    msg(error.message.includes('Invalid login credentials') ? 'Email atau password salah.' : error.message);
+    return
+  }
+  if (data?.user) await boot(data.user)
+};
+$('signupBtn').onclick = async () => {
+  const email = $('email').value.trim(),
+    password = $('password').value;
+  if (!email || !password) return msg('Isi email dan password terlebih dahulu.');
+  if (password.length < 6) return msg('Password minimal 6 karakter.');
+  setLoginLoading(true, 'MEMBUAT AKUN...');
+  const {
+    data,
+    error
+  } = await S.sb.auth.signUp({
+    email: internalEmail(email),
+    password,
+    options: {
+      data: {
+        full_name: email.trim()
+      }
+    }
+  });
+  setLoginLoading(false);
+  if (error) msg(error.message);
+  else msg(data.session ? 'Akun berhasil dibuat. Silakan masuk.' : 'Akun dibuat. Jika konfirmasi email aktif, cek inbox lalu lakukan verifikasi.')
+};
+$('togglePassword').onclick = () => {
+  const p = $('password'),
+    btn = $('togglePassword');
+  p.type = p.type === 'password' ? 'text' : 'password';
+  btn.textContent = p.type === 'password' ? '◉' : '◌'
+};
+$('forgotBtn').onclick = async () => {
+  const email = $('email').value.trim();
+  if (!email) return msg('Masukkan email terlebih dahulu untuk reset password.');
+  if (!S.sb) return msg('Supabase belum dikonfigurasi.');
+  const redirect = window.location.origin + window.location.pathname;
+  const {
+    error
+  } = await S.sb.auth.resetPasswordForEmail(internalEmail(email), {
+    redirectTo: redirect
+  });
+  if (error) msg(error.message);
+  else msg('Link reset password telah dikirim. Cek email Anda.')
+};
+$('setupBtn').onclick = showSetup;
+document.querySelectorAll('.nav button[data-view]').forEach(b => b.onclick = () => {
+  if (b.classList.contains('hidden')) return;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  $(b.dataset.view).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  $('pageTitle').textContent = b.textContent.replace(/^[^\w]+/, '').trim();
+  $('sidebar').classList.remove('open')
+});
+$('menuBtn').onclick = () => $('sidebar').classList.toggle('open');
+$('modal').onclick = e => {
+  if (e.target.id === 'modal') closeModal();
+};
+setInterval(() => {
+  $('clockTime').textContent = new Date().toLocaleTimeString('id-ID');
+  $('clockDate').textContent = new Date().toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  })
+}, 1000);
+init();
+</script><style>.auth-note{margin-top:10px;text-align:center;font-size:12px;opacity:.7}</style><div class="auth-note">Login menggunakan <b>username + password</b>. Tidak perlu email.</div>
+<style>
+
+
+.position-chip{display:inline-flex;padding:3px 8px;border-radius:999px;font-size:11px;background:rgba(80,160,255,.12);border:1px solid rgba(80,160,255,.22)}
+</style>
+<script>
+</script>
+</body></html>
