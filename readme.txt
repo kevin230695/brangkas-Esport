@@ -178,3 +178,31 @@ UPDATE: BRANGKAS ESPORT — JABATAN, RESEP, STOK, KAS KOTOR
 - Semua sebutan "Azura" pada aplikasi dan skema database sudah diganti menjadi
   "Brangkas Esport", termasuk email internal login (sekarang @brangkasesport.com)
   dan localStorage key konfigurasi Supabase.
+
+
+UPDATE: PENGELUARAN, REKAP PEMESAN, REKAP TANGGAL, ARSIP (ala kapakbisnis)
+- WAJIB: jalankan file migration_kapakbisnis_features.sql di Supabase SQL Editor
+  (setelah supabase.sql dan migration_update_brangkas.sql pernah dijalankan).
+- Menu baru di sidebar (grup "LAPORAN", izin `finance` — sama seperti Pembukuan & Kas):
+  Pengeluaran, Rekap Pemesan, Rekap Tanggal, Arsip.
+- PENGELUARAN: catat pengeluaran non-bahan (sewa, listrik, dll) lewat tombol
+  + PENGELUARAN (tanggal, keterangan, nominal). Tersimpan atomic lewat function
+  record_expense: mengecek kas cukup, mencatat baris di tabel expenses, dan
+  otomatis memotong Total Kas di Pembukuan & Kas (jenis transaksi "PENGELUARAN").
+  Total Kas kini = Pemasukan − Withdraw − Pembelian Bahan − Gaji − Pengeluaran.
+- REKAP PEMESAN: rekap total belanja per nama pelanggan dari Pesanan, diurutkan
+  dari belanja terbesar, sudah termasuk data yang sudah diarsipkan. Ada filter
+  tanggal & nama pemesan, dan klik baris untuk lihat rincian pesanan pelanggan
+  tsb (tanggal, item, qty, harga, total, status).
+- REKAP TANGGAL: rekap total belanja per tanggal (jumlah order & total belanja),
+  diurutkan dari tanggal terbaru, termasuk data arsip. Klik baris untuk lihat
+  rincian pesanan pada tanggal tsb.
+- ARSIP: pilih "Arsipkan Pesanan Sebelum Tanggal" lalu tekan ARSIPKAN SEKARANG.
+  Semua pesanan (semua status) yang dibuat sebelum tanggal tsb dipindahkan dari
+  Pesanan ke Arsip secara atomic lewat function archive_orders (baris disalin ke
+  order_archives + ringkasan batch dicatat di archive_batches, lalu dihapus dari
+  orders). Data yang sudah diarsipkan tetap terhitung di Rekap Pemesan & Rekap
+  Tanggal, dan bisa dilihat rinciannya lagi lewat menu Arsip (klik baris batch).
+- Rekap Pemesan/Tanggal & Arsip mengikuti perilaku kapakbisnis: hanya pesanan
+  berstatus BATAL yang dikecualikan dari rekap; pesanan PENDING & SELESAI tetap
+  dihitung sebagai "belanja" pada rekap (sesuai perilaku asli kapakbisnis).

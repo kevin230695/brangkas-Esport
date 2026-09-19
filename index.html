@@ -89,7 +89,7 @@ function internalEmail(username){const u=String(username||'').trim().toLowerCase
   <div class="login-secure">🔒 Login aman dengan Supabase Authentication</div>
   <div id="loginMsg" class="muted login-msg"></div>
 </div></div>
-<div id="app" class="app hidden"><aside id="sidebar" class="sidebar"><img class="logo" src="assets/brangkas-esport.png"><div class="brand"><b>BRANGKAS</b><span>ESPORT</span></div><nav class="nav"><small>OPERASIONAL</small><button data-view="dashboard" class="active">▣ Dashboard</button><small>BRANGKAS ESPORT</small><button data-view="products">▧ Produk & Stok</button><button data-view="materials" data-perm="products">◈ Bahan & Crafting</button><button data-view="sales">▰ Penjualan</button><button data-view="orders" data-perm="sales">🧾 Pesanan</button><small>MANAGEMENT</small><button data-view="finance" data-perm="finance">▣ Pembukuan & Kas</button><button data-view="employees" data-perm="employees">♙ Member & Akses</button><button data-view="payroll" data-perm="payroll">💵 Penggajian</button><button data-view="settings" data-perm="settings">⚙ Pengaturan</button></nav><div class="userbox"><strong id="userName">-</strong><span id="userRole">-</span><button class="btn secondary full" id="logoutBtn">KELUAR</button></div></aside>
+<div id="app" class="app hidden"><aside id="sidebar" class="sidebar"><img class="logo" src="assets/brangkas-esport.png"><div class="brand"><b>BRANGKAS</b><span>ESPORT</span></div><nav class="nav"><small>OPERASIONAL</small><button data-view="dashboard" class="active">▣ Dashboard</button><small>BRANGKAS ESPORT</small><button data-view="products">▧ Produk & Stok</button><button data-view="materials" data-perm="products">◈ Bahan & Crafting</button><button data-view="sales">▰ Penjualan</button><button data-view="orders" data-perm="sales">🧾 Pesanan</button><small>MANAGEMENT</small><button data-view="finance" data-perm="finance">▣ Pembukuan & Kas</button><small>LAPORAN</small><button data-view="expenses" data-perm="finance">▼ Pengeluaran</button><button data-view="rekapPemesan" data-perm="finance">▤ Rekap Pemesan</button><button data-view="rekapTanggal" data-perm="finance">▥ Rekap Tanggal</button><button data-view="arsip" data-perm="finance">▦ Arsip</button><small>MANAGEMENT</small><button data-view="employees" data-perm="employees">♙ Member & Akses</button><button data-view="payroll" data-perm="payroll">💵 Penggajian</button><button data-view="settings" data-perm="settings">⚙ Pengaturan</button></nav><div class="userbox"><strong id="userName">-</strong><span id="userRole">-</span><button class="btn secondary full" id="logoutBtn">KELUAR</button></div></aside>
 <main class="main"><header class="top"><div class="row"><button class="btn secondary mobile-menu" id="menuBtn">☰</button><h1 id="pageTitle">Dashboard</h1></div><div class="clock"><b id="clockTime">--:--:--</b><span id="clockDate">-</span></div></header><div class="content">
 <section id="dashboard" class="view active"><div class="hero"><h2>BRANGKAS ESPORT</h2><p>Panel operasional Brangkas Esport dengan penjualan, stok, dan kontrol akses Member.</p></div><div class="grid kpis" style="grid-template-columns:repeat(2,1fr)"><div class="card"><div class="label">Penjualan Hari Ini</div><div class="value yellow" id="kpiSales">Rp0</div></div><div class="card"><div class="label">Total Produk</div><div class="value blue" id="kpiProdukTotal">0</div></div></div><div class="grid cards3" style="margin-top:16px"><div class="card"><h3>Aktivitas Terbaru</h3><div id="recentActivity"></div></div><div class="card"><h3>Akses Akun</h3><div id="myAccess"></div></div></div></section>
 
@@ -98,7 +98,7 @@ function internalEmail(username){const u=String(username||'').trim().toLowerCase
 <section id="materials" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Bahan & Crafting</h2><p class="muted">Kelola stock bahan baku. Saat crafting berhasil, bahan otomatis berkurang dan stock produk otomatis bertambah.</p></div></div><div class="grid kpis material-kpis"><div class="card"><div class="label">Total Bahan</div><div class="value blue" id="matKpiTotal">0</div></div><div class="card"><div class="label">Bahan Habis</div><div class="value red" id="matKpiEmpty">0</div></div><div class="card"><div class="label">Nilai Stock Bahan</div><div class="value green" id="matKpiValue">Rp0</div></div></div><div class="grid cards3"><div class="card" style="grid-column:span 2"><div class="material-toolbar"><h3 style="margin:0">Stock Bahan</h3><div class="row" style="gap:8px"><input id="materialSearch" class="material-search" placeholder="Cari bahan..."><button class="btn secondary" id="addMaterialBtn" data-perm="products">+ BAHAN</button><button class="btn secondary" id="buyMaterialBtn" data-perm="products">🛒 BELI</button></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Bahan</th><th>Harga</th><th>Stock</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="materialRows"></tbody></table></div></div><div class="card"><div class="row" style="margin-bottom:10px"><h3 style="margin:0">Resep Crafting</h3><div class="row" style="gap:8px;width:auto"><button class="btn secondary" id="manageRecipeBtn" data-perm="products">⚙ ATUR RESEP</button><button class="btn" id="craftBtn" data-perm="products">⚒ CRAFT</button></div></div><p class="muted">1x craft menghasilkan 1 unit produk dan otomatis mengurangi bahan.</p><div id="recipeList"></div></div></div></section>
 <section id="sales" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Penjualan</h2><p class="muted">Input transaksi penjualan Brangkas Esport.</p></div><button class="btn" id="addSaleBtn" data-perm="sales">+ PENJUALAN</button></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Waktu</th><th>Produk</th><th>Qty</th><th>Total</th><th>Keterangan</th><th>Kasir</th></tr></thead><tbody id="saleRows"></tbody></table></div></div></section>
 <section id="orders" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Pesanan</h2><p class="muted">Buat pesanan dengan keterangan. Saat pesanan diselesaikan, stok otomatis berkurang dan langsung tercatat di Pembukuan & Kas.</p></div><button class="btn" id="addOrderBtn" data-perm="sales">+ PESANAN</button></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Waktu</th><th>Produk</th><th>Qty</th><th>Pelanggan</th><th>Keterangan</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="orderRows"></tbody></table></div></div></section>
-<section id="finance" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Pembukuan & Kas</h2><p class="muted">Catat deposit, withdraw, pemasukan penjualan, dan pantau total kas.</p></div><div class="toolbar" style="margin:0"><button class="btn success" id="depositBtn" data-perm="finance">+ DEPOSIT</button><button class="btn danger" id="withdrawBtn" data-perm="finance">− WITHDRAW</button></div></div><div class="grid kpis"><div class="card finance-kpi"><div class="label">Total Pemasukan</div><div class="value green" id="financeIncome">Rp0</div><div class="mini">Penjualan + deposit</div></div><div class="card finance-kpi"><div class="label">Total Withdraw</div><div class="value red" id="financeWithdraw">Rp0</div><div class="mini">Pengeluaran kas</div></div><div class="card finance-kpi"><div class="label">Total Kas</div><div class="value blue" id="financeCash">Rp0</div><div class="mini">Pemasukan − withdraw − bahan − gaji</div></div><div class="card finance-kpi"><div class="label">Penjualan</div><div class="value yellow" id="financeSales">Rp0</div><div class="mini">Pemasukan dari transaksi</div></div><div class="card finance-kpi"><div class="label">Pembelian Bahan</div><div class="value red" id="financePurchase">Rp0</div><div class="mini">Pengeluaran untuk bahan baku</div></div><div class="card finance-kpi"><div class="label">Gaji Karyawan</div><div class="value red" id="financePayroll">Rp0</div><div class="mini">Pengeluaran penggajian</div></div></div><div class="card" style="margin-top:16px"><div class="row"><div><h3>Riwayat Pembukuan</h3><p class="muted">Semua perubahan kas tercatat di sini.</p></div><button class="btn secondary" id="refreshFinance">REFRESH</button></div><div class="table-wrap"><table class="table"><thead><tr><th>Waktu</th><th>Jenis</th><th>Nominal</th><th>Keterangan</th><th>Petugas</th></tr></thead><tbody id="financeRows"></tbody></table></div></div><div class="card" style="margin-top:16px"><div class="row" style="margin-bottom:16px"><div><h3>Arus Kas Kotor</h3><p class="muted">Uang masuk yang dicatat manual dulu (kas kotor) sebelum resmi dipindahkan ke Kas Bersih.</p></div><button class="btn" id="addDirtyCashBtn" data-perm="finance">+ CATAT KAS KOTOR</button></div><div class="grid kpis" style="grid-template-columns:repeat(2,1fr)"><div class="card finance-kpi"><div class="label">Kas Kotor Belum Dibersihkan</div><div class="value yellow" id="dirtyCashTotal">Rp0</div></div><div class="card finance-kpi"><div class="label">Sudah Dipindahkan ke Kas Bersih</div><div class="value green" id="dirtyCashCleared">Rp0</div></div></div><div class="table-wrap" style="margin-top:12px"><table class="table"><thead><tr><th>Waktu</th><th>Nominal</th><th>Keterangan</th><th>Status</th><th>Petugas</th><th>Aksi</th></tr></thead><tbody id="dirtyCashRows"></tbody></table></div></div></section><section id="employees" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Member & Akses</h2><p class="muted">Admin dapat mengatur role dan fitur yang boleh dibuka member.</p></div><button class="btn" id="addEmployeeBtn">+ MEMBER</button></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Nama</th><th>Email</th><th>Jabatan</th><th>Role</th><th>Akses</th><th>Aksi</th></tr></thead><tbody id="employeeRows"></tbody></table></div></div></section>
+<section id="finance" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Pembukuan & Kas</h2><p class="muted">Catat deposit, withdraw, pemasukan penjualan, dan pantau total kas.</p></div><div class="toolbar" style="margin:0"><button class="btn success" id="depositBtn" data-perm="finance">+ DEPOSIT</button><button class="btn danger" id="withdrawBtn" data-perm="finance">− WITHDRAW</button></div></div><div class="grid kpis"><div class="card finance-kpi"><div class="label">Total Pemasukan</div><div class="value green" id="financeIncome">Rp0</div><div class="mini">Penjualan + deposit</div></div><div class="card finance-kpi"><div class="label">Total Withdraw</div><div class="value red" id="financeWithdraw">Rp0</div><div class="mini">Pengeluaran kas</div></div><div class="card finance-kpi"><div class="label">Total Kas</div><div class="value blue" id="financeCash">Rp0</div><div class="mini">Pemasukan − withdraw − bahan − gaji − pengeluaran</div></div><div class="card finance-kpi"><div class="label">Penjualan</div><div class="value yellow" id="financeSales">Rp0</div><div class="mini">Pemasukan dari transaksi</div></div><div class="card finance-kpi"><div class="label">Pembelian Bahan</div><div class="value red" id="financePurchase">Rp0</div><div class="mini">Pengeluaran untuk bahan baku</div></div><div class="card finance-kpi"><div class="label">Gaji Karyawan</div><div class="value red" id="financePayroll">Rp0</div><div class="mini">Pengeluaran penggajian</div></div><div class="card finance-kpi"><div class="label">Pengeluaran Lain</div><div class="value red" id="financeExpense">Rp0</div><div class="mini">Sewa, listrik, dll — lihat menu Pengeluaran</div></div></div><div class="card" style="margin-top:16px"><div class="row"><div><h3>Riwayat Pembukuan</h3><p class="muted">Semua perubahan kas tercatat di sini.</p></div><button class="btn secondary" id="refreshFinance">REFRESH</button></div><div class="table-wrap"><table class="table"><thead><tr><th>Waktu</th><th>Jenis</th><th>Nominal</th><th>Keterangan</th><th>Petugas</th></tr></thead><tbody id="financeRows"></tbody></table></div></div><div class="card" style="margin-top:16px"><div class="row" style="margin-bottom:16px"><div><h3>Arus Kas Kotor</h3><p class="muted">Uang masuk yang dicatat manual dulu (kas kotor) sebelum resmi dipindahkan ke Kas Bersih.</p></div><button class="btn" id="addDirtyCashBtn" data-perm="finance">+ CATAT KAS KOTOR</button></div><div class="grid kpis" style="grid-template-columns:repeat(2,1fr)"><div class="card finance-kpi"><div class="label">Kas Kotor Belum Dibersihkan</div><div class="value yellow" id="dirtyCashTotal">Rp0</div></div><div class="card finance-kpi"><div class="label">Sudah Dipindahkan ke Kas Bersih</div><div class="value green" id="dirtyCashCleared">Rp0</div></div></div><div class="table-wrap" style="margin-top:12px"><table class="table"><thead><tr><th>Waktu</th><th>Nominal</th><th>Keterangan</th><th>Status</th><th>Petugas</th><th>Aksi</th></tr></thead><tbody id="dirtyCashRows"></tbody></table></div></div></section><section id="expenses" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Pengeluaran</h2><p class="muted">Catat pengeluaran non-bahan (sewa, listrik, dll). Otomatis memotong Total Kas di Pembukuan & Kas.</p></div><div class="toolbar" style="margin:0"><button class="btn" id="addExpenseBtn" data-perm="finance">+ PENGELUARAN</button></div></div><div class="grid kpis" style="grid-template-columns:repeat(2,1fr)"><div class="card finance-kpi"><div class="label">Total Pengeluaran</div><div class="value red" id="expTotal">Rp0</div></div><div class="card finance-kpi"><div class="label">Jumlah Transaksi</div><div class="value blue" id="expCount">0</div></div></div><div class="card" style="margin-top:16px"><div class="toolbar" style="margin-bottom:12px"><input id="expSearch" placeholder="Cari keterangan..." style="min-width:240px"></div><div class="table-wrap"><table class="table"><thead><tr><th>Tanggal</th><th>Keterangan</th><th class="num">Nominal</th><th>Dicatat Oleh</th></tr></thead><tbody id="expenseRows"></tbody></table></div></div></section><section id="rekapPemesan" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Rekap Pemesan</h2><p class="muted">Diurutkan dari belanja terbesar · termasuk data yang sudah diarsipkan · klik baris untuk lihat detail.</p></div></div><div class="card" style="margin-bottom:16px"><div class="formgrid"><div class="field"><label>Dari Tanggal</label><input type="date" id="rpDari"></div><div class="field"><label>Sampai Tanggal</label><input type="date" id="rpSampai"></div><div class="field" style="grid-column:span 2"><label>Cari Pemesan</label><input id="rpCari" placeholder="Nama pemesan..."></div></div><button class="btn secondary" style="margin-top:12px" id="rpResetBtn">RESET FILTER</button></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>#</th><th>Pemesan</th><th class="num">Jumlah Order</th><th class="num">Total Belanja</th></tr></thead><tbody id="rekapPemesanRows"></tbody></table></div></div></section><section id="rekapTanggal" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Rekap Tanggal</h2><p class="muted">Diurutkan dari tanggal terbaru · termasuk data arsip · klik baris untuk lihat detail.</p></div></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Tanggal</th><th class="num">Jumlah Order</th><th class="num">Total Belanja</th></tr></thead><tbody id="rekapTanggalRows"></tbody></table></div></div></section><section id="arsip" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Arsip</h2><p class="muted">Pesanan lama dipindahkan ke arsip supaya Buku Pesanan tetap ringkas. Data tetap terhitung di Rekap Pemesan &amp; Rekap Tanggal.</p></div></div><div class="card" style="margin-bottom:16px" data-perm="finance"><div class="formgrid"><div class="field"><label>Arsipkan Pesanan Sebelum Tanggal</label><input type="date" id="arsipCutoff"></div></div><div class="notice" id="arsipPreview" style="margin-top:12px">Pilih tanggal untuk melihat berapa pesanan yang akan diarsipkan.</div><button class="btn" style="margin-top:12px" id="arsipBtn">ARSIPKAN SEKARANG</button></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Periode</th><th class="num">Jumlah Order</th><th class="num">Total Belanja</th><th>Diarsipkan Pada</th><th>Petugas</th></tr></thead><tbody id="arsipRows"></tbody></table></div></div></section><section id="employees" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Member & Akses</h2><p class="muted">Admin dapat mengatur role dan fitur yang boleh dibuka member.</p></div><button class="btn" id="addEmployeeBtn">+ MEMBER</button></div><div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Nama</th><th>Email</th><th>Jabatan</th><th>Role</th><th>Akses</th><th>Aksi</th></tr></thead><tbody id="employeeRows"></tbody></table></div></div></section>
 <section id="payroll" class="view"><div class="row" style="margin-bottom:16px"><div><h2>Penggajian</h2><p class="muted">Buat slip gaji karyawan. Saat slip dibayar, pengeluaran otomatis tercatat di Pembukuan & Kas.</p></div><button class="btn" id="addPayrollBtn" data-perm="payroll">+ BUAT SLIP GAJI</button></div><div class="grid kpis"><div class="card"><div class="label">Slip Draft</div><div class="value blue" id="payrollDraftCount">0</div></div><div class="card"><div class="label">Sudah Dibayar</div><div class="value green" id="payrollPaidCount">0</div></div><div class="card"><div class="label">Total Draft</div><div class="value yellow" id="payrollDraftTotal">Rp0</div></div><div class="card"><div class="label">Total Dibayar</div><div class="value red" id="payrollPaidTotal">Rp0</div></div></div><div class="card" style="margin-top:16px"><div class="table-wrap"><table class="table"><thead><tr><th>Karyawan</th><th>Jabatan</th><th>Periode</th><th>Gaji Pokok</th><th>Tunjangan+Bonus</th><th>Potongan</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="payrollRows"></tbody></table></div></div></section>
 <section id="settings" class="view"><div class="card"><h2>Pengaturan</h2><p class="muted">Konfigurasi dasar dashboard Brangkas Esport.</p><div class="notice">Gunakan Supabase Auth untuk akun. Role dan akses disimpan di tabel <b>profiles</b> dengan RLS sehingga Member tidak dapat mengubah aksesnya sendiri.</div><div class="formgrid" style="margin-top:16px"><div class="field"><label>Nama Perusahaan</label><input id="companyName" value="BRANGKAS ESPORT"></div><div class="field"><label>Jenis Usaha</label><input value="RFMS" disabled></div></div></div></section>
 </div></main></div>
@@ -117,7 +117,10 @@ const S = {
   profiles: [],
   finance: [],
   stockMovements: [],
-  dirtyCash: []
+  dirtyCash: [],
+  expenses: [],
+  orderArchives: [],
+  archiveBatches: []
 };
 const PERMS = [
   ['dashboard', 'Dashboard'],
@@ -220,7 +223,7 @@ function applyAccess() {
   })
 }
 async function loadData() {
-  const [pr, ma, re, sa, or_, pr2, ps, fi, sm, dc] = await Promise.all([S.sb.from('products').select('*').order('created_at', {
+  const [pr, ma, re, sa, or_, pr2, ps, fi, sm, dc, ex, oa, ab] = await Promise.all([S.sb.from('products').select('*').order('created_at', {
     ascending: false
   }), S.sb.from('materials').select('*').order('name'), S.sb.from('crafting_recipes').select('id,product_id,material_id,qty,products(name),materials(name,stock)').order('product_id'), S.sb.from('sales').select('*').order('sold_at', {
     ascending: false
@@ -234,7 +237,13 @@ async function loadData() {
     ascending: false
   }).limit(200), S.sb.from('dirty_cash').select('*').order('created_at', {
     ascending: false
-  }).limit(200)]);
+  }).limit(200), S.sb.from('expenses').select('*').order('tanggal', {
+    ascending: false
+  }).limit(300), S.sb.from('order_archives').select('*').order('created_at', {
+    ascending: false
+  }).limit(1000), S.sb.from('archive_batches').select('*').order('archived_at', {
+    ascending: false
+  }).limit(100)]);
   S.products = pr.data || [];
   S.materials = ma.data || [];
   S.recipes = re.data || [];
@@ -245,6 +254,9 @@ async function loadData() {
   S.finance = fi.data || [];
   S.stockMovements = sm.data || [];
   S.dirtyCash = dc.data || [];
+  S.expenses = ex.data || [];
+  S.orderArchives = oa.data || [];
+  S.archiveBatches = ab.data || [];
 }
 
 function renderAll() {
@@ -261,7 +273,11 @@ function renderAll() {
   renderAccess();
   renderFinance();
   renderStockMovements();
-  renderDirtyCash()
+  renderDirtyCash();
+  renderExpenses();
+  renderRekapPemesan();
+  renderRekapTanggal();
+  renderArsip()
 }
 
 function renderFinance() {
@@ -270,7 +286,8 @@ function renderFinance() {
   const purchase = S.finance.filter(x => x.transaction_type === 'purchase').reduce((a, x) => a + Number(x.amount || 0), 0);
   const payroll = S.finance.filter(x => x.transaction_type === 'payroll').reduce((a, x) => a + Number(x.amount || 0), 0);
   const sales = S.finance.filter(x => x.transaction_type === 'sale').reduce((a, x) => a + Number(x.amount || 0), 0);
-  const cash = income - withdraw - purchase - payroll;
+  const expense = S.finance.filter(x => x.transaction_type === 'expense').reduce((a, x) => a + Number(x.amount || 0), 0);
+  const cash = income - withdraw - purchase - payroll - expense;
   $('financeIncome').textContent = rupiah(income);
   $('financeWithdraw').textContent = rupiah(withdraw);
   $('financeCash').textContent = rupiah(cash);
@@ -278,9 +295,10 @@ function renderFinance() {
   $('financeSales').textContent = rupiah(sales);
   $('financePurchase').textContent = rupiah(purchase);
   $('financePayroll').textContent = rupiah(payroll);
+  if ($('financeExpense')) $('financeExpense').textContent = rupiah(expense);
   $('financeRows').innerHTML = S.finance.map(x => {
-    const isOut = x.transaction_type === 'withdraw' || x.transaction_type === 'purchase' || x.transaction_type === 'payroll';
-    const label = x.transaction_type === 'sale' ? 'PENJUALAN' : x.transaction_type === 'deposit' ? 'DEPOSIT' : x.transaction_type === 'purchase' ? 'BELI BAHAN' : x.transaction_type === 'payroll' ? 'GAJI' : 'WITHDRAW';
+    const isOut = x.transaction_type === 'withdraw' || x.transaction_type === 'purchase' || x.transaction_type === 'payroll' || x.transaction_type === 'expense';
+    const label = x.transaction_type === 'sale' ? 'PENJUALAN' : x.transaction_type === 'deposit' ? 'DEPOSIT' : x.transaction_type === 'purchase' ? 'BELI BAHAN' : x.transaction_type === 'payroll' ? 'GAJI' : x.transaction_type === 'expense' ? 'PENGELUARAN' : 'WITHDRAW';
     return `<tr><td>${new Date(x.created_at).toLocaleString('id-ID')}</td><td><span class="badge ${isOut?'off':'on'}">${label}</span></td><td class="${isOut?'txn-out':'txn-in'}">${isOut?'− ':'+ '}${rupiah(x.amount)}</td><td>${esc(x.description||'-')}</td><td>${esc(x.created_by_name||'-')}</td></tr>`
   }).join('') || `<tr><td colspan="5" class="empty">Belum ada transaksi pembukuan.</td></tr>`
 }
@@ -293,6 +311,192 @@ function renderDirtyCash() {
   if ($('dirtyCashTotal')) $('dirtyCashTotal').textContent = rupiah(totalKotor);
   if ($('dirtyCashCleared')) $('dirtyCashCleared').textContent = rupiah(totalBersihkan);
   $('dirtyCashRows').innerHTML = S.dirtyCash.map(d => `<tr><td>${new Date(d.created_at).toLocaleString('id-ID')}</td><td>${rupiah(d.amount)}</td><td>${esc(d.keterangan||'-')}</td><td><span class="badge ${d.status==='bersih'?'on':'off'}">${d.status==='bersih'?'BERSIH':'KOTOR'}</span></td><td>${esc(d.created_by_name||'-')}</td><td>${d.status==='kotor'&&has('finance')?`<button class="btn success" onclick="clearDirtyCash('${d.id}')">BERSIHKAN</button>`:'-'}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">Belum ada catatan kas kotor.</td></tr>`
+}
+
+// ---------- Pengeluaran ----------
+function renderExpenses() {
+  if (!$('expenseRows')) return;
+  const q = ($('expSearch')?.value || '').trim().toLowerCase();
+  const list = q ? S.expenses.filter(e => (e.keterangan || '').toLowerCase().includes(q)) : S.expenses;
+  $('expTotal').textContent = rupiah(S.expenses.reduce((a, e) => a + Number(e.nominal || 0), 0));
+  $('expCount').textContent = S.expenses.length;
+  $('expenseRows').innerHTML = list.map(e => `<tr><td>${new Date(e.tanggal).toLocaleDateString('id-ID')}</td><td>${esc(e.keterangan)}</td><td>${rupiah(e.nominal)}</td><td>${esc(e.created_by_name||'-')}</td></tr>`).join('') || `<tr><td colspan="4" class="empty">${q?'Tidak ada pengeluaran yang cocok.':'Belum ada pengeluaran.'}</td></tr>`
+}
+$('expSearch')?.addEventListener('input', renderExpenses);
+
+function addExpense() {
+  showModal(`<h3>Catat Pengeluaran</h3><div class="formgrid"><div class="field"><label>Tanggal</label><input type="date" id="expTanggal" value="${dateKey(new Date())}"></div><div class="field"><label>Nominal</label><input type="number" id="expNominal" min="1" placeholder="0"></div></div><div class="field" style="margin-top:10px"><label>Keterangan</label><input id="expKeterangan" placeholder="Contoh: Sewa server, listrik, dll"></div><div class="notice" style="margin-top:12px">Nominal akan otomatis memotong Total Kas di Pembukuan & Kas.</div><button class="btn full" onclick="saveExpense()">SIMPAN PENGELUARAN</button>`)
+}
+window.saveExpense = async () => {
+  const tanggal = $('expTanggal').value,
+    nominal = Number($('expNominal').value),
+    keterangan = $('expKeterangan').value.trim();
+  if (!keterangan) return alert('Keterangan wajib diisi.');
+  if (!nominal || nominal <= 0) return alert('Nominal harus lebih dari 0.');
+  const {
+    data,
+    error
+  } = await S.sb.rpc('record_expense', {
+    p_tanggal: tanggal,
+    p_keterangan: keterangan,
+    p_nominal: nominal
+  });
+  if (error) return alert(error.message);
+  closeModal();
+  await loadData();
+  renderAll();
+  alert(data || 'Pengeluaran berhasil dicatat.')
+}
+
+// ---------- Rekap Pemesan / Rekap Tanggal (gabungan orders aktif + arsip) ----------
+function getOrderRecords() {
+  const live = S.orders.filter(o => o.status !== 'batal').map(o => ({
+    tanggal: dateKey(o.created_at),
+    customer_name: o.customer_name || 'Tanpa Nama',
+    product_name: o.product_name,
+    qty: o.qty,
+    price: o.price,
+    total: Number(o.total || 0),
+    status: o.status,
+    created_at: o.created_at
+  }));
+  const archived = S.orderArchives.filter(o => o.status !== 'batal').map(o => ({
+    tanggal: dateKey(o.created_at),
+    customer_name: o.customer_name || 'Tanpa Nama',
+    product_name: o.product_name,
+    qty: o.qty,
+    price: o.price,
+    total: Number(o.total || 0),
+    status: o.status,
+    created_at: o.created_at
+  }));
+  return live.concat(archived)
+}
+let rpFilters = {
+  dari: '',
+  sampai: '',
+  cari: ''
+};
+
+function applyRpFilters(records) {
+  return records.filter(r => {
+    if (rpFilters.dari && r.tanggal < rpFilters.dari) return false;
+    if (rpFilters.sampai && r.tanggal > rpFilters.sampai) return false;
+    if (rpFilters.cari && !r.customer_name.toLowerCase().includes(rpFilters.cari.toLowerCase())) return false;
+    return true
+  })
+}
+
+function renderRekapPemesan() {
+  if (!$('rekapPemesanRows')) return;
+  const filtered = applyRpFilters(getOrderRecords());
+  const map = {};
+  filtered.forEach(o => {
+    (map[o.customer_name] ??= {
+      total: 0,
+      count: 0
+    });
+    map[o.customer_name].total += o.total;
+    map[o.customer_name].count += 1
+  });
+  const rows = Object.entries(map).sort((a, b) => b[1].total - a[1].total);
+  $('rekapPemesanRows').innerHTML = rows.map(([name, v], i) => `<tr style="cursor:pointer" onclick="openRekapDetail('${encodeURIComponent(name)}')"><td>${i+1}</td><td><b>${esc(name)}</b></td><td>${v.count}</td><td>${rupiah(v.total)}</td></tr>`).join('') || `<tr><td colspan="4" class="empty">Tidak ada data pemesan.</td></tr>`
+}
+window.openRekapDetail = encName => {
+  const name = decodeURIComponent(encName);
+  const records = applyRpFilters(getOrderRecords()).filter(o => o.customer_name === name).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const total = records.reduce((s, o) => s + o.total, 0);
+  showModal(`<h3>Detail Pesanan — ${esc(name)}</h3><p class="muted">Jumlah Order: <b>${records.length}</b> &nbsp;·&nbsp; Total Belanja: <b>${rupiah(total)}</b></p><div class="table-wrap"><table class="table"><thead><tr><th>Tanggal</th><th>Item</th><th class="num">Qty</th><th class="num">Harga</th><th class="num">Total</th><th>Status</th></tr></thead><tbody>${records.map(o=>`<tr><td>${new Date(o.created_at).toLocaleDateString('id-ID')}</td><td>${esc(o.product_name)}</td><td class="num">${o.qty}</td><td class="num">${rupiah(o.price)}</td><td class="num">${rupiah(o.total)}</td><td>${orderStatusBadge(o.status)}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">Tidak ada pesanan.</td></tr>`}</tbody></table></div>`)
+}
+$('rpDari')?.addEventListener('input', e => {
+  rpFilters.dari = e.target.value;
+  renderRekapPemesan()
+});
+$('rpSampai')?.addEventListener('input', e => {
+  rpFilters.sampai = e.target.value;
+  renderRekapPemesan()
+});
+$('rpCari')?.addEventListener('input', e => {
+  rpFilters.cari = e.target.value.trim();
+  renderRekapPemesan()
+});
+$('rpResetBtn')?.addEventListener('click', () => {
+  rpFilters = {
+    dari: '',
+    sampai: '',
+    cari: ''
+  };
+  if ($('rpDari')) $('rpDari').value = '';
+  if ($('rpSampai')) $('rpSampai').value = '';
+  if ($('rpCari')) $('rpCari').value = '';
+  renderRekapPemesan()
+});
+
+function renderRekapTanggal() {
+  if (!$('rekapTanggalRows')) return;
+  const all = getOrderRecords();
+  const map = {};
+  all.forEach(o => {
+    (map[o.tanggal] ??= {
+      total: 0,
+      count: 0
+    });
+    map[o.tanggal].total += o.total;
+    map[o.tanggal].count += 1
+  });
+  const rows = Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+  $('rekapTanggalRows').innerHTML = rows.map(([tgl, v]) => `<tr style="cursor:pointer" onclick="openTanggalDetail('${tgl}')"><td>${new Date(tgl).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})}</td><td>${v.count}</td><td>${rupiah(v.total)}</td></tr>`).join('') || `<tr><td colspan="3" class="empty">Belum ada data pesanan.</td></tr>`
+}
+window.openTanggalDetail = tgl => {
+  const records = getOrderRecords().filter(o => o.tanggal === tgl).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const total = records.reduce((s, o) => s + o.total, 0);
+  showModal(`<h3>Detail Pesanan — ${new Date(tgl).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})}</h3><p class="muted">Jumlah Order: <b>${records.length}</b> &nbsp;·&nbsp; Total Belanja: <b>${rupiah(total)}</b></p><div class="table-wrap"><table class="table"><thead><tr><th>Pemesan</th><th>Item</th><th class="num">Qty</th><th class="num">Harga</th><th class="num">Total</th><th>Status</th></tr></thead><tbody>${records.map(o=>`<tr><td>${esc(o.customer_name)}</td><td>${esc(o.product_name)}</td><td class="num">${o.qty}</td><td class="num">${rupiah(o.price)}</td><td class="num">${rupiah(o.total)}</td><td>${orderStatusBadge(o.status)}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">Tidak ada pesanan.</td></tr>`}</tbody></table></div>`)
+}
+
+// ---------- Arsip ----------
+function renderArsip() {
+  if (!$('arsipRows')) return;
+  const rows = S.archiveBatches.slice().sort((a, b) => new Date(b.archived_at) - new Date(a.archived_at));
+  $('arsipRows').innerHTML = rows.map(a => `<tr style="cursor:pointer" onclick="openArsipDetail('${a.id}')"><td>Sebelum ${new Date(a.cutoff_date).toLocaleDateString('id-ID')}</td><td>${a.jumlah_order}</td><td>${rupiah(a.total_belanja)}</td><td>${new Date(a.archived_at).toLocaleString('id-ID')}</td><td>${esc(a.archived_by_name||'-')}</td></tr>`).join('') || `<tr><td colspan="5" class="empty">Belum ada data yang diarsipkan.</td></tr>`;
+  updateArsipPreview()
+}
+window.openArsipDetail = id => {
+  const batch = S.archiveBatches.find(x => x.id === id);
+  if (!batch) return;
+  const records = S.orderArchives.filter(o => o.batch_id === id).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  showModal(`<h3>Rincian Arsip — Sebelum ${new Date(batch.cutoff_date).toLocaleDateString('id-ID')}</h3><p class="muted">Jumlah Order: <b>${batch.jumlah_order}</b> &nbsp;·&nbsp; Total Belanja: <b>${rupiah(batch.total_belanja)}</b></p><div class="table-wrap"><table class="table"><thead><tr><th>Tanggal</th><th>Pemesan</th><th>Item</th><th class="num">Qty</th><th class="num">Harga</th><th class="num">Total</th><th>Status</th></tr></thead><tbody>${records.map(o=>`<tr><td>${new Date(o.created_at).toLocaleDateString('id-ID')}</td><td>${esc(o.customer_name||'-')}</td><td>${esc(o.product_name)}</td><td class="num">${o.qty}</td><td class="num">${rupiah(o.price)}</td><td class="num">${rupiah(o.total)}</td><td>${orderStatusBadge(o.status)}</td></tr>`).join('') || `<tr><td colspan="7" class="empty">Tidak ada rincian.</td></tr>`}</tbody></table></div>`)
+}
+
+function updateArsipPreview() {
+  if (!$('arsipCutoff') || !$('arsipPreview')) return;
+  const cutoff = $('arsipCutoff').value;
+  if (!cutoff) {
+    $('arsipPreview').textContent = 'Pilih tanggal untuk melihat berapa pesanan yang akan diarsipkan.';
+    return
+  }
+  const toArchive = S.orders.filter(o => dateKey(o.created_at) < cutoff);
+  if (!toArchive.length) {
+    $('arsipPreview').textContent = `Tidak ada pesanan sebelum ${new Date(cutoff).toLocaleDateString('id-ID')}.`;
+    return
+  }
+  const total = toArchive.reduce((s, o) => s + Number(o.total || 0), 0);
+  $('arsipPreview').textContent = `${toArchive.length} pesanan (${rupiah(total)}) sebelum ${new Date(cutoff).toLocaleDateString('id-ID')} akan diarsipkan.`
+}
+$('arsipCutoff')?.addEventListener('input', updateArsipPreview);
+window.doArchive = async () => {
+  const cutoff = $('arsipCutoff').value;
+  if (!cutoff) return alert('Pilih tanggal batas arsip terlebih dahulu.');
+  if (!confirm(`Arsipkan semua pesanan sebelum ${new Date(cutoff).toLocaleDateString('id-ID')}? Baris akan dipindah dari Pesanan ke Arsip, tapi tetap terhitung di Rekap Pemesan & Rekap Tanggal.`)) return;
+  const {
+    data,
+    error
+  } = await S.sb.rpc('archive_orders', {
+    p_cutoff: cutoff
+  });
+  if (error) return alert(error.message);
+  await loadData();
+  renderAll();
+  alert(data || 'Pesanan berhasil diarsipkan.')
 }
 
 function renderProducts() {
@@ -898,6 +1102,8 @@ $('refreshFinance').onclick = async () => {
   await loadData();
   renderAll()
 };
+$('addExpenseBtn')?.addEventListener('click', addExpense);
+$('arsipBtn')?.addEventListener('click', () => window.doArchive());
 $('addEmployeeBtn').onclick = addEmployee;
 $('addPayrollBtn').onclick = addPayrollSlip;
 $('logoutBtn').onclick = async () => {
