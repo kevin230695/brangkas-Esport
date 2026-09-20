@@ -50,6 +50,14 @@
     main,footer{ margin-left:0; } main{ padding:16px; } .clock{ display:none; }
   }
   .view{ display:none; } .view.active{ display:block; }
+  .cell-in{ width:100%; min-width:0; padding:6px 8px; font:inherit; font-size:14px; color:inherit; background:transparent; border:1px solid transparent; border-radius:4px; transition:border-color .2s, background .2s; }
+  .cell-in.n{ text-align:right; -moz-appearance:textfield; appearance:textfield; }
+  .cell-in.n::-webkit-inner-spin-button,.cell-in.n::-webkit-outer-spin-button{ -webkit-appearance:none; margin:0; }
+  .cell-in.t{ font-weight:600; }
+  .cell-in:hover{ border-color:var(--border-hi); }
+  .cell-in:focus{ outline:none; background:var(--bg-alt); border-color:var(--brass); }
+  .cell-in.saved{ border-color:var(--green); }
+  #itemRows td{ padding-top:4px; padding-bottom:4px; }
   .seg{ display:inline-flex; gap:2px; padding:3px; margin-bottom:16px; background:var(--bg-alt); border:1px solid var(--border); border-radius:var(--r); }
   .seg-btn{ font:inherit; font-size:14px; padding:7px 16px; color:var(--text-dim); background:transparent; border:0; border-radius:4px; cursor:pointer; }
   .seg-btn.active{ background:var(--panel-2); color:var(--brass-dim); font-weight:600; }
@@ -367,7 +375,7 @@
       <span class="sub" id="itemCount">0 item</span>
     </div>
     <div class="seg" id="itemTabs">
-      <button type="button" class="seg-btn active" data-pane="list">Daftar Item</button>
+      <button type="button" class="seg-btn active" data-pane="list">Master Item &amp; Harga</button>
       <button type="button" class="seg-btn" data-pane="stock">Stok Masuk &amp; Keluar</button>
     </div>
 
@@ -387,24 +395,24 @@
       </div>
 
       <form class="item-form" id="itemForm" hidden>
-        <input type="hidden" id="iEditId">
-        <div class="full" style="text-align:left;"><strong id="itemFormTitle">Item baru</strong></div>
+        <div class="full" style="text-align:left;"><strong>Tambah item baru</strong></div>
         <div class="field" style="grid-column:span 2;"><label>Nama item</label><input type="text" id="iNama" required></div>
         <div class="field"><label>Kategori</label><input type="text" id="iKategori" list="iKatList" placeholder="Senjata / Peluru / Vest" required><datalist id="iKatList"></datalist></div>
-        <div class="field"><label>Stok awal</label><input type="number" id="iStok" min="0" required><small id="iStokHint" style="color:var(--text-faint);font-size:12px;" hidden>Ubah stok lewat tab Stok Masuk &amp; Keluar</small></div>
+        <div class="field"><label>Stok awal</label><input type="number" id="iStok" min="0" required></div>
         <div class="field"><label>Harga Aliansi</label><input type="number" id="iHargaA" min="0" required></div>
         <div class="field"><label>Maks. per pesanan (Aliansi)</label><input type="number" id="iMaxA" min="0" required></div>
         <div class="field"><label>Harga Non Aliansi</label><input type="number" id="iHargaN" min="0" required></div>
         <div class="field"><label>Maks. per pesanan (Non Aliansi)</label><input type="number" id="iMaxN" min="0" required></div>
         <div class="full">
-          <button type="submit" class="btn" id="itemSaveBtn">Simpan item</button>
+          <button type="submit" class="btn">Simpan item</button>
           <button type="button" class="btn ghost" id="itemCancelBtn">Batal</button>
         </div>
       </form>
 
+      <p class="stamp" style="margin:0 0 10px;">Klik teks atau angka di tabel untuk mengubahnya langsung (harga dalam Rupiah). Perubahan tersimpan otomatis saat Anda pindah kolom atau menekan Enter (Esc untuk membatalkan). Perubahan stok tercatat di riwayat sebagai koreksi manual.</p>
       <div class="table-wrap">
-        <table>
-          <thead><tr><th>Item</th><th>Kategori</th><th class="num">Stok</th><th>Status</th><th class="num">Harga Aliansi</th><th class="num">Harga Non Aliansi</th><th></th></tr></thead>
+        <table style="min-width:1020px;table-layout:fixed;">
+          <thead><tr><th style="width:180px">Item</th><th style="width:130px">Kategori</th><th class="num" style="width:80px">Stok</th><th style="width:95px">Status</th><th class="num" style="width:130px">Harga Aliansi</th><th class="num" style="width:80px">Maks A</th><th class="num" style="width:150px">Harga Non Aliansi</th><th class="num" style="width:80px">Maks N</th><th style="width:95px"></th></tr></thead>
           <tbody id="itemRows"></tbody>
         </table>
       </div>
@@ -1307,35 +1315,42 @@
 
   // ---------- Render: Items table ----------
   function itemStatus(i){ return i.stok <= 0 ? ['HABIS','bad'] : (i.stok <= state.config.batasStok ? ['MENIPIS','mid'] : ['AMAN','ok']); }
-  function renderItems(){
-    const all = state.items;
-    const cnt = k => all.filter(i=>itemStatus(i)[1]===k).length;
+  function renderItemSummary(){
+    const all = state.items, cnt = k => all.filter(i=>itemStatus(i)[1]===k).length;
     document.getElementById('iSumAll').textContent = all.length;
     document.getElementById('iSumOk').textContent = cnt('ok');
     document.getElementById('iSumLow').textContent = cnt('mid');
     document.getElementById('iSumOut').textContent = cnt('bad');
     document.getElementById('itemCount').textContent = all.length + ' item';
-
+  }
+  function renderItems(){
+    const all = state.items;
+    renderItemSummary();
     const kats = [...new Set(all.map(i=>i.kategori).filter(Boolean))].sort();
     const katSel = document.getElementById('iKatFilter'), curKat = katSel.value;
     katSel.innerHTML = '<option value="">Semua kategori</option>' + kats.map(k=>`<option value="${esc(k)}">${esc(k)}</option>`).join('');
     katSel.value = kats.includes(curKat) ? curKat : '';
     document.getElementById('iKatList').innerHTML = kats.map(k=>`<option value="${esc(k)}">`).join('');
 
+    // jangan timpa kolom yang sedang diketik (mis. saat data real-time masuk)
+    const ae = document.activeElement;
+    if(ae && ae.classList && ae.classList.contains('cell-in')) return;
+
     const q = document.getElementById('iSearch').value.trim().toLowerCase(), st = document.getElementById('iStatFilter').value, kt = katSel.value;
     const list = all.filter(i=> (!q || i.nama.toLowerCase().includes(q)) && (!kt || i.kategori===kt) && (!st || itemStatus(i)[1]===st));
+    const num = (i, f, v) => `<input class="cell-in n" type="number" min="0" step="1" data-id="${i.id}" data-f="${f}" value="${v}">`;
     document.getElementById('itemRows').innerHTML = list.length ? list.map(i=>{
       const [lbl, cls] = itemStatus(i);
-      return `<tr>
-        <td><b>${esc(i.nama)}</b></td>
-        <td>${esc(i.kategori)}</td>
-        <td class="num"><b>${i.stok}</b></td>
-        <td><span class="badge ${cls}">${lbl}</span></td>
-        <td class="num">${rupiah(i.hargaA)}<div style="font-size:12px;color:var(--text-faint);">maks ${i.maxA}</div></td>
-        <td class="num">${rupiah(i.hargaN)}<div style="font-size:12px;color:var(--text-faint);">maks ${i.maxN}</div></td>
-        <td style="white-space:nowrap;text-align:right;"><button class="btn ghost sm" data-stock-item="${i.id}">Stok</button> <button class="btn ghost sm" data-edit-item="${i.id}">Ubah</button> <button class="icon-btn" data-del-item="${i.id}" title="Hapus">✕</button></td>
+      return `<tr data-row="${i.id}">
+        <td><input class="cell-in t" type="text" data-id="${i.id}" data-f="nama" value="${esc(i.nama)}"></td>
+        <td><input class="cell-in" type="text" list="iKatList" data-id="${i.id}" data-f="kategori" value="${esc(i.kategori)}"></td>
+        <td>${num(i,'stok',i.stok)}</td>
+        <td><span class="badge ${cls}" data-badge>${lbl}</span></td>
+        <td>${num(i,'hargaA',i.hargaA)}</td><td>${num(i,'maxA',i.maxA)}</td>
+        <td>${num(i,'hargaN',i.hargaN)}</td><td>${num(i,'maxN',i.maxN)}</td>
+        <td style="white-space:nowrap;text-align:right;"><button class="btn ghost sm" data-stock-item="${i.id}" title="Catat barang masuk / keluar">Stok</button> <button class="icon-btn" data-del-item="${i.id}" title="Hapus item">✕</button></td>
       </tr>`;
-    }).join('') : `<tr class="empty-row"><td colspan="7">${all.length ? 'Tidak ada item yang cocok dengan filter.' : 'Belum ada item. Klik “+ Item baru” untuk menambahkan.'}</td></tr>`;
+    }).join('') : `<tr class="empty-row"><td colspan="9">${all.length ? 'Tidak ada item yang cocok dengan filter.' : 'Belum ada item. Klik “+ Item baru” untuk menambahkan.'}</td></tr>`;
   }
   ['iSearch','iKatFilter','iStatFilter'].forEach(id=> document.getElementById(id).addEventListener('input', renderItems));
 
@@ -1346,20 +1361,11 @@
   }
   document.getElementById('itemTabs').addEventListener('click', e=>{ const b = e.target.closest('.seg-btn'); if(b) showItemPane(b.dataset.pane); });
 
-  function openItemForm(item){
-    const f = document.getElementById('itemForm'); f.reset();
-    document.getElementById('iEditId').value = item ? item.id : '';
-    document.getElementById('itemFormTitle').textContent = item ? `Ubah item: ${item.nama}` : 'Item baru';
-    document.getElementById('itemSaveBtn').textContent = item ? 'Simpan perubahan' : 'Simpan item';
-    document.getElementById('iStokHint').hidden = !item;
-    document.getElementById('iStok').readOnly = !!item;
-    if(item){
-      iNama.value = item.nama; iKategori.value = item.kategori; iStok.value = item.stok;
-      iHargaA.value = item.hargaA; iMaxA.value = item.maxA; iHargaN.value = item.hargaN; iMaxN.value = item.maxN;
-    }
-    f.hidden = false; f.scrollIntoView({ behavior:'smooth', block:'center' }); iNama.focus();
+  function openItemForm(){
+    const f = document.getElementById('itemForm'); f.reset(); f.hidden = false;
+    f.scrollIntoView({ behavior:'smooth', block:'center' }); document.getElementById('iNama').focus();
   }
-  document.getElementById('iNewBtn').addEventListener('click', ()=> openItemForm(null));
+  document.getElementById('iNewBtn').addEventListener('click', openItemForm);
   document.getElementById('itemCancelBtn').addEventListener('click', ()=>{ document.getElementById('itemForm').hidden = true; });
 
   // ---------- Pengeluaran (restock expenses) ----------
@@ -2310,23 +2316,49 @@
     const v = id => document.getElementById(id).value;
     const nama = v('iNama').trim(), kategori = v('iKategori').trim();
     if(!nama || !kategori){ toast('Lengkapi nama dan kategori.'); return; }
-    const data = { nama, kategori, hargaA:Number(v('iHargaA')), maxA:Number(v('iMaxA')), hargaN:Number(v('iHargaN')), maxN:Number(v('iMaxN')) };
-    const editId = v('iEditId');
-    if(editId){
-      const it = itemById(editId); if(!it) return;
-      Object.assign(it, data); await dbUpdateItem(it); toast('Item diperbarui.');
-    } else {
-      if(state.items.some(i=>i.nama.toLowerCase()===nama.toLowerCase()) && !confirm(`Item “${nama}” sudah ada. Tetap tambahkan?`)) return;
-      const newItem = { id: uid(), stok: Number(v('iStok')), ...data };
-      state.items.push(newItem); await dbInsertItem(newItem); toast('Item disimpan.');
-    }
-    e.target.hidden = true; e.target.reset();
-    renderAll();
+    if(state.items.some(i=>i.nama.toLowerCase()===nama.toLowerCase()) && !confirm(`Item “${nama}” sudah ada. Tetap tambahkan?`)) return;
+    const newItem = { id: uid(), nama, kategori, stok:Number(v('iStok')), hargaA:Number(v('iHargaA')), maxA:Number(v('iMaxA')), hargaN:Number(v('iHargaN')), maxN:Number(v('iMaxN')) };
+    state.items.push(newItem); await dbInsertItem(newItem);
+    e.target.hidden = true; e.target.reset(); renderAll(); toast('Item disimpan.');
   });
 
-  document.getElementById('itemRows').addEventListener('click', async (e)=>{
-    const edit = e.target.closest('[data-edit-item]'), stk = e.target.closest('[data-stock-item]'), btn = e.target.closest('[data-del-item]');
-    if(edit){ openItemForm(itemById(edit.dataset.editItem)); return; }
+  // ---- edit langsung di tabel (otomatis tersimpan) ----
+  const itemTbody = document.getElementById('itemRows');
+  itemTbody.addEventListener('change', async (e)=>{
+    const inp = e.target.closest('.cell-in'); if(!inp) return;
+    const it = itemById(inp.dataset.id), f = inp.dataset.f; if(!it) return;
+    const textField = f === 'nama' || f === 'kategori';
+    const val = textField ? inp.value.trim() : Math.floor(Number(inp.value));
+    if((textField && !val) || (!textField && !(val >= 0))){
+      inp.value = it[f]; toast(textField ? 'Isian tidak boleh kosong.' : 'Isi dengan angka 0 atau lebih.'); return;
+    }
+    if(val === it[f]){ inp.value = val; return; }
+    const old = it[f]; it[f] = val; inp.value = val;
+    if(f === 'stok'){
+      const delta = val - old, tipe = delta > 0 ? 'MASUK' : 'KELUAR', now = new Date().toISOString();
+      const mv = { id: uid(), itemId: it.id, itemNama: it.nama, tipe, jumlah: Math.abs(delta), stokSetelah: val, keterangan: 'Koreksi stok manual (Master Item)', dibuatPada: now };
+      state.stockMovements.unshift(mv);
+      await dbUpdateItemStok(it.id, val);
+      const { error } = await sb.from('stock_movements').insert([{ id:mv.id, item_id:it.id, item_nama:it.nama, tipe, jumlah:mv.jumlah, stok_setelah:val, keterangan:mv.keterangan, dibuat_pada:now }]);
+      if(error) console.error('insert stock_movements failed', error);
+      renderStockMoves();
+    } else {
+      await dbUpdateItem(it);
+    }
+    const [lbl, cls] = itemStatus(it), badge = inp.closest('tr').querySelector('[data-badge]');
+    badge.textContent = lbl; badge.className = 'badge ' + cls;
+    renderItemSummary();
+    inp.classList.add('saved'); setTimeout(()=> inp.classList.remove('saved'), 1200);
+  });
+  itemTbody.addEventListener('keydown', (e)=>{
+    if(!e.target.classList.contains('cell-in')) return;
+    if(e.key === 'Enter'){ e.preventDefault(); e.target.blur(); }
+    if(e.key === 'Escape'){ const it = itemById(e.target.dataset.id); if(it) e.target.value = it[e.target.dataset.f]; e.target.blur(); }
+  });
+  itemTbody.addEventListener('focusin', (e)=>{ if(e.target.classList.contains('n')) e.target.select(); });
+
+  itemTbody.addEventListener('click', async (e)=>{
+    const stk = e.target.closest('[data-stock-item]'), btn = e.target.closest('[data-del-item]');
     if(stk){
       showItemPane('stock');
       const rows = [...document.querySelectorAll('#smRows .sm-row')];
