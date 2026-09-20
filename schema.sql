@@ -77,6 +77,32 @@ create table if not exists public.pengeluaran (
 );
 
 -- ---------------------------------------------------------------------
+-- TABEL: resep — resep crafting (item hasil + daftar bahan yang dipakai)
+-- ---------------------------------------------------------------------
+create table if not exists public.resep (
+  id              text primary key,
+  nama            text not null,
+  result_item_id  text references public.items(id) on delete set null,
+  result_jumlah   numeric not null default 1,
+  bahan           jsonb not null default '[]'::jsonb   -- [{ itemId, jumlah }, ...]
+);
+
+-- ---------------------------------------------------------------------
+-- TABEL: crafting_log — riwayat setiap kali sebuah resep di-craft
+-- ---------------------------------------------------------------------
+create table if not exists public.crafting_log (
+  id              text primary key,
+  recipe_id       text,
+  nama_resep      text,
+  result_item_id  text,
+  nama_hasil      text,
+  jumlah_craft    numeric not null default 0,   -- jumlah batch yang di-craft
+  hasil_jumlah    numeric not null default 0,   -- total unit hasil (result_jumlah x jumlah_craft)
+  bahan_terpakai  jsonb not null default '[]'::jsonb, -- [{ itemId, nama, jumlah }, ...]
+  dibuat_pada     timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------
 -- TABEL: config — pengaturan aplikasi (target, batas stok, webhook, dll)
 -- ---------------------------------------------------------------------
 create table if not exists public.config (
@@ -106,18 +132,20 @@ create table if not exists public.webhook_log (
 -- yang memegang Project URL + anon key bisa baca/tulis data ini.
 -- Jangan sebarkan anon key ke publik jika data ini sensitif.
 -- =====================================================================
-alter table public.items       enable row level security;
-alter table public.orders      enable row level security;
-alter table public.archive     enable row level security;
-alter table public.pengeluaran enable row level security;
-alter table public.config      enable row level security;
-alter table public.webhook_log enable row level security;
+alter table public.items        enable row level security;
+alter table public.orders       enable row level security;
+alter table public.archive      enable row level security;
+alter table public.pengeluaran  enable row level security;
+alter table public.resep        enable row level security;
+alter table public.crafting_log enable row level security;
+alter table public.config       enable row level security;
+alter table public.webhook_log  enable row level security;
 
 do $$
 declare
   t text;
 begin
-  foreach t in array array['items','orders','archive','pengeluaran','config','webhook_log']
+  foreach t in array array['items','orders','archive','pengeluaran','resep','crafting_log','config','webhook_log']
   loop
     execute format('drop policy if exists "allow_all_%1$s" on public.%1$s;', t);
     execute format(
