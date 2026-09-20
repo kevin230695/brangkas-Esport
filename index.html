@@ -143,6 +143,7 @@
   .recipe-hasil{ font-size:13px; color:var(--text-dim); margin:-2px 0 10px; padding-bottom:10px; border-bottom:1px solid var(--border); } .recipe-hasil b{ color:var(--text); }
   .recipe-craft-controls{ display:flex; gap:8px; margin-top:12px; } .recipe-craft-controls input{ width:80px; text-align:right; }
   .recipe-card-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .form-title{ grid-column:1/-1; text-align:left; font-weight:600; font-size:15px; }
   .recipe-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px; } .recipe-head h3{ margin:0; padding:0; border:0; }
   .recipe-grid{ align-items:start; }
   .recipe-max{ font-size:12.5px; color:var(--text-faint); margin-top:8px; }
@@ -400,7 +401,7 @@
       </div>
 
       <form class="item-form" id="itemForm" hidden>
-        <div class="full" style="text-align:left;"><strong>Tambah item baru</strong></div>
+        <div class="form-title">Tambah item baru</div>
         <div class="field" style="grid-column:span 2;"><label>Nama item</label><input type="text" id="iNama" required></div>
         <div class="field"><label>Kategori</label><input type="text" id="iKategori" list="iKatList" placeholder="Senjata / Peluru / Vest" required><datalist id="iKatList"></datalist></div>
         <div class="field"><label>Stok awal</label><input type="number" id="iStok" min="0" required></div>
@@ -456,16 +457,23 @@
     </div>
 
     <div id="craftPaneRecipes">
+      <div class="cashflow-grid-4">
+        <div class="kpi-card"><div class="kpi-label">Total resep</div><div class="kpi-value" id="cSumAll">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Siap craft</div><div class="kpi-value" style="color:var(--green);" id="cSumReady">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Bahan kurang</div><div class="kpi-value" style="color:var(--red);" id="cSumShort">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Craft hari ini</div><div class="kpi-value" id="cSumToday">0</div></div>
+      </div>
       <p class="stamp" style="margin:0 0 12px;">Pilih resep, tentukan jumlah craft, lalu tekan Craft. Stok bahan otomatis berkurang dan stok item hasil otomatis bertambah.</p>
-      <div class="filter-bar" style="grid-template-columns:2fr 1fr auto;">
+      <div class="filter-bar" style="grid-template-columns:2fr 1fr 1fr auto;">
         <div class="field"><label>Cari resep</label><input type="search" id="rSearch" placeholder="Ketik nama resep atau item..."></div>
         <div class="field"><label>Tampilkan</label><select id="rFilter"><option value="">Semua resep</option><option value="ready">Siap craft</option><option value="short">Bahan kurang</option></select></div>
+        <div class="field"><label>Urutkan</label><select id="rSort"><option value="ready">Siap craft dulu</option><option value="name">Nama A–Z</option></select></div>
         <div class="field"><label>&nbsp;</label><button type="button" class="btn" id="rNewBtn">+ Resep baru</button></div>
       </div>
 
       <form class="item-form" id="recipeForm" style="grid-template-columns:2fr 2fr 1fr;" hidden>
         <input type="hidden" id="recipeEditingId" value="">
-        <div class="full" style="text-align:left;"><strong id="recipeFormTitle">Resep baru</strong></div>
+        <div class="form-title" id="recipeFormTitle">Resep baru</div>
         <div class="field"><label>Nama resep</label><input type="text" id="rNama" placeholder="Misal: Rakit Peluru 9mm" required></div>
         <div class="field"><label>Item hasil</label><select id="rResultItem" class="recipe-result-select" required></select></div>
         <div class="field"><label>Jumlah hasil / craft</label><input type="number" id="rResultJumlah" min="1" value="1" required></div>
@@ -487,6 +495,10 @@
     </div>
 
     <div id="craftPaneLog" hidden>
+      <div class="filter-bar" style="grid-template-columns:1fr 2fr;">
+        <div class="field"><label>Resep</label><select id="cLogFilter"><option value="">Semua resep</option></select></div>
+        <div class="field"><label>&nbsp;</label><div class="stamp" id="craftLogSummary" style="margin:0;padding:9px 0;"></div></div>
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Waktu</th><th>Resep</th><th>Hasil</th><th class="num">Jumlah craft</th><th class="num">Total hasil</th><th>Bahan terpakai</th></tr></thead>
@@ -1231,6 +1243,12 @@
     return '<option value="">Pilih item</option>' +
       state.items.map(i=>`<option value="${i.id}">${i.nama} (${i.kategori})</option>`).join('');
   }
+  function craftOptionsHtml(){
+    const groups = {};
+    state.items.forEach(i=>{ (groups[i.kategori||'Lainnya'] = groups[i.kategori||'Lainnya'] || []).push(i); });
+    return '<option value="">Pilih item</option>' + Object.keys(groups).sort().map(k=>
+      `<optgroup label="${esc(k)}">` + groups[k].map(i=>`<option value="${i.id}">${esc(i.nama)} — stok ${i.stok}</option>`).join('') + '</optgroup>').join('');
+  }
   function expItemOptionsHtml(){
     return '<option value="">— Tanpa item / lainnya —</option>' +
       state.items.map(i=>`<option value="${i.id}">${i.nama} (${i.kategori})</option>`).join('');
@@ -1246,9 +1264,14 @@
       sel.innerHTML = expItemOptionsHtml();
       if(cur) sel.value = cur;
     });
-    document.querySelectorAll('.recipe-result-select, .bahan-item-select, .sm-item').forEach(sel=>{
+    document.querySelectorAll('.sm-item').forEach(sel=>{
       const cur = sel.value;
       sel.innerHTML = itemOptionsHtml();
+      if(cur) sel.value = cur;
+    });
+    document.querySelectorAll('.recipe-result-select, .bahan-item-select').forEach(sel=>{
+      const cur = sel.value;
+      sel.innerHTML = craftOptionsHtml();
       if(cur) sel.value = cur;
     });
   }
@@ -2572,7 +2595,7 @@
     row.className = 'bahan-cart-row';
     row.dataset.rowId = 'bahanrow' + (recipeBahanRowSeq++);
     row.innerHTML = `
-      <select class="bahan-item-select">${itemOptionsHtml()}</select>
+      <select class="bahan-item-select">${craftOptionsHtml()}</select>
       <input type="number" class="bahan-jumlah-input" min="1" placeholder="0">
       <button type="button" class="icon-btn bahan-remove" title="Hapus baris">✕</button>
     `;
@@ -2608,6 +2631,18 @@
   });
   addRecipeBahanRow(); // baris bahan kosong pertama saat halaman dimuat
 
+  document.getElementById('rResultItem').addEventListener('change', e=>{
+    const it = itemById(e.target.value), nm = document.getElementById('rNama');
+    if(it && !nm.value.trim() && !document.getElementById('recipeEditingId').value) nm.value = 'Rakit ' + it.nama;
+  });
+  function duplicateRecipe(id){
+    const r = state.recipes.find(x=>x.id===id); if(!r) return;
+    startEditRecipe(id);
+    document.getElementById('recipeEditingId').value = '';
+    document.getElementById('rNama').value = 'Salinan ' + r.nama;
+    document.getElementById('recipeFormTitle').textContent = 'Resep baru (salinan dari ' + r.nama + ')';
+    document.getElementById('recipeSubmitBtn').textContent = 'Simpan resep';
+  }
   function showRecipeForm(){
     const f = document.getElementById('recipeForm'); f.hidden = false;
     setCraftPane('recipes'); f.scrollIntoView({ behavior:'smooth', block:'center' }); document.getElementById('rNama').focus();
@@ -2698,9 +2733,21 @@
     btn.textContent = res ? `Craft → +${r.resultJumlah * batch} ${res.nama}` : 'Item hasil dihapus';
   }
 
+  function lastCraftText(id){
+    const t = state.craftingLogs.filter(l=>l.recipeId===id).map(l=>l.dibuatPada||'').sort().pop();
+    return t ? 'Terakhir di-craft ' + fmtDateTime(t) : 'Belum pernah di-craft';
+  }
+  function renderCraftSummary(){
+    const ready = state.recipes.filter(r=>recipeMaxCraft(r) >= 1).length, today = todayISO();
+    document.getElementById('cSumAll').textContent = state.recipes.length;
+    document.getElementById('cSumReady').textContent = ready;
+    document.getElementById('cSumShort').textContent = state.recipes.length - ready;
+    document.getElementById('cSumToday').textContent = state.craftingLogs.filter(l=>(l.dibuatPada||'').slice(0,10) === today).reduce((a,l)=>a + Number(l.jumlahCraft||0), 0);
+  }
   function renderRecipes(){
     const wrap = document.getElementById('recipeList');
     document.getElementById('recipeCount').textContent = state.recipes.length + ' resep';
+    renderCraftSummary();
     const ae = document.activeElement;
     if(ae && ae.classList && ae.classList.contains('craft-jumlah-input')){ document.querySelectorAll('.recipe-card').forEach(recalcRecipeCard); return; }
     const keep = {}; wrap.querySelectorAll('.craft-jumlah-input').forEach(i=>{ keep[i.dataset.craftJumlah] = i.value; });
@@ -2711,6 +2758,8 @@
       const hay = (r.nama + ' ' + (res ? res.nama : '')).toLowerCase();
       return (!q || hay.includes(q)) && (flt === '' || (flt === 'ready' ? ready : !ready));
     });
+    if(document.getElementById('rSort').value === 'name') list.sort((a,b)=> a.nama.localeCompare(b.nama, 'id'));
+    else list.sort((a,b)=> (recipeMaxCraft(b) >= 1) - (recipeMaxCraft(a) >= 1));
     if(!list.length){
       wrap.innerHTML = state.recipes.length
         ? '<div class="recipe-empty">Tidak ada resep yang cocok dengan pencarian atau filter.</div>'
@@ -2728,7 +2777,7 @@
       }).join('') || '<div class="recipe-empty" style="padding:14px;">Belum ada bahan.</div>';
       return `<div class="panel recipe-card" data-recipe-id="${r.id}">
         <div class="recipe-head"><h3>${esc(r.nama)}</h3><span class="badge recipe-status"></span></div>
-        <div class="recipe-hasil">Hasil: <b>${res ? esc(res.nama) : '(item dihapus)'}</b> × ${r.resultJumlah} per craft${res ? ` · stok sekarang ${res.stok}` : ''}</div>
+        <div class="recipe-hasil">Hasil: <b>${res ? esc(res.nama) : '(item dihapus)'}</b> × ${r.resultJumlah} per craft${res ? ` · stok sekarang ${res.stok}` : ''}<br><span style="color:var(--text-faint);">${lastCraftText(r.id)}</span></div>
         ${bahanHtml}
         <div class="recipe-max"></div>
         <div class="recipe-craft-controls">
@@ -2737,14 +2786,14 @@
           <button type="button" class="btn" data-craft-recipe="${r.id}"></button>
         </div>
         <div class="recipe-card-actions">
-          <button type="button" class="btn ghost sm" data-edit-recipe="${r.id}">Ubah resep</button>
+          <span><button type="button" class="btn ghost sm" data-edit-recipe="${r.id}">Ubah</button> <button type="button" class="btn ghost sm" data-dup-recipe="${r.id}">Duplikat</button></span>
           <button type="button" class="icon-btn" data-del-recipe="${r.id}" title="Hapus resep">✕</button>
         </div>
       </div>`;
     }).join('');
     document.querySelectorAll('.recipe-card').forEach(recalcRecipeCard);
   }
-  ['rSearch','rFilter'].forEach(id=> document.getElementById(id).addEventListener('input', renderRecipes));
+  ['rSearch','rFilter','rSort'].forEach(id=> document.getElementById(id).addEventListener('input', renderRecipes));
 
   let craftShowAll = false;
   function renderCraftLog(){
@@ -2752,7 +2801,12 @@
     if(!state.craftingLogs.length){
       tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Belum ada riwayat crafting.</td></tr>'; btn.hidden = true; return;
     }
-    const sorted = state.craftingLogs.slice().sort((a,b)=> (b.dibuatPada||'').localeCompare(a.dibuatPada||'')), LIMIT = 10;
+    const fSel = document.getElementById('cLogFilter'), curF = fSel.value;
+    const names = [...new Set(state.craftingLogs.map(l=>l.namaResep))].sort((a,b)=>a.localeCompare(b,'id'));
+    fSel.innerHTML = '<option value="">Semua resep</option>' + names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    fSel.value = names.includes(curF) ? curF : '';
+    const sorted = state.craftingLogs.filter(l=>!fSel.value || l.namaResep === fSel.value).sort((a,b)=> (b.dibuatPada||'').localeCompare(a.dibuatPada||'')), LIMIT = 10;
+    document.getElementById('craftLogSummary').textContent = `${sorted.length} catatan · total ${sorted.reduce((t,l)=>t+Number(l.jumlahCraft||0),0)}x craft`;
     const shown = craftShowAll ? sorted : sorted.slice(0, LIMIT);
     tbody.innerHTML = shown.map(l=>{
       const bahanText = (l.bahanTerpakai||[]).map(b=>`${esc(b.nama)} ×${b.jumlah}`).join(', ');
@@ -2768,6 +2822,7 @@
     btn.hidden = sorted.length <= LIMIT;
     btn.textContent = craftShowAll ? 'Tampilkan lebih sedikit' : `Tampilkan semua (${sorted.length} catatan)`;
   }
+  document.getElementById('cLogFilter').addEventListener('input', renderCraftLog);
   document.getElementById('craftMoreBtn').addEventListener('click', ()=>{ craftShowAll = !craftShowAll; renderCraftLog(); });
 
   async function craftRecipe(recipeId, batch){
@@ -2813,6 +2868,11 @@
     toast(`Berhasil craft ${hasilJumlah} ${resultItem.nama}, stok bahan otomatis berkurang.`);
   }
 
+  document.getElementById('recipeList').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && e.target.classList.contains('craft-jumlah-input')){
+      e.preventDefault(); const inp = e.target, b = inp.closest('.recipe-card').querySelector('[data-craft-recipe]'); inp.blur(); if(!b.disabled) b.click();
+    }
+  });
   document.getElementById('recipeList').addEventListener('input', (e)=>{
     if(e.target.classList.contains('craft-jumlah-input')){
       recalcRecipeCard(e.target.closest('.recipe-card'));
@@ -2832,6 +2892,8 @@
       card.querySelector('.craft-jumlah-input').value = Math.max(1, r ? recipeMaxCraft(r) : 1);
       recalcRecipeCard(card); return;
     }
+    const dupBtn = e.target.closest('[data-dup-recipe]');
+    if(dupBtn){ duplicateRecipe(dupBtn.dataset.dupRecipe); return; }
     const editBtn = e.target.closest('[data-edit-recipe]');
     if(editBtn){ startEditRecipe(editBtn.dataset.editRecipe); return; }
     const delBtn = e.target.closest('[data-del-recipe]');
