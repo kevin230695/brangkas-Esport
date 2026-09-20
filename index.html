@@ -544,18 +544,21 @@
     </div>
 
     <div class="section-head" style="margin-top:34px;">
-      <h2>Arus Kas <em>Kotor</em></h2>
-      <span class="sub">Catat uang masuk manual dulu sebagai kas kotor, tekan BERSIHKAN untuk memindahkannya ke Kas Bersih (masuk ke Pembukuan &amp; Saldo)</span>
+      <h2>Arus Uang <em>Kotor</em></h2>
+      <span class="sub">Catat uang masuk manual dulu sebagai uang kotor, tekan BERSIHKAN untuk memindahkannya ke Kas Bersih (masuk ke Pembukuan &amp; Saldo)</span>
     </div>
-    <div class="cashflow-grid">
-      <div class="kpi-card"><div class="kpi-label">Kas Kotor (Belum Dibersihkan)</div><div class="kpi-value" style="color:var(--gold);" id="dcKotor">Rp0</div></div>
-      <div class="kpi-card"><div class="kpi-label">Sudah Dibersihkan</div><div class="kpi-value" style="color:var(--green);" id="dcBersih">Rp0</div></div>
+    <div class="cashflow-grid-4">
+      <div class="kpi-card"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="dcAwal">Rp0</div><button type="button" class="btn ghost sm" id="dcAwalBtn" style="margin-top:8px;">Ubah</button></div>
+      <div class="kpi-card"><div class="kpi-label">Total Kas Masuk</div><div class="kpi-value" style="color:var(--green);" id="dcMasuk">Rp0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total Kas Keluar</div><div class="kpi-value" style="color:var(--red);" id="dcKeluar">Rp0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Saldo Akhir</div><div class="kpi-value" style="color:var(--gold);" id="dcAkhir">Rp0</div></div>
     </div>
+    <div class="stamp" style="margin:-6px 0 14px;">Saldo Akhir = Saldo Awal + Total Kas Masuk − Total Kas Keluar. Kas Keluar adalah uang kotor yang sudah dibersihkan ke Kas Bersih, jadi Saldo Akhir adalah uang kotor yang masih tersisa.</div>
     <form class="item-form" id="dirtyForm" style="grid-template-columns:1fr 1fr 3fr;">
       <div class="field"><label>Tanggal</label><input type="date" id="dcTanggal" required></div>
       <div class="field"><label>Nominal</label><input type="number" id="dcNominal" min="1" step="1" required></div>
       <div class="field"><label>Keterangan (wajib)</label><input type="text" id="dcKet" placeholder="Contoh: Hasil penjualan belum disetor" required></div>
-      <div class="full"><button type="submit" class="btn">+ Catat Kas Kotor</button></div>
+      <div class="full"><button type="submit" class="btn">+ Catat Uang Kotor</button></div>
     </form>
     <div class="table-wrap">
       <table>
@@ -972,6 +975,7 @@
         batasStok: Number(map.batas_stok ?? 20),
         currency: map.mata_uang || 'Rp',
         saldoAwal: Number(map.saldo_awal ?? 0),
+        saldoAwalKotor: Number(map.saldo_awal_kotor ?? 0),
         webhookPesanan: map.discord_webhook_pesanan ?? legacyWebhook,
         webhookSelesai: map.discord_webhook_selesai ?? (map.discord_webhook_status ?? legacyWebhook),
         webhookPengeluaran: map.discord_webhook_pengeluaran ?? legacyWebhook,
@@ -1098,6 +1102,7 @@
       sb.from('config').upsert([{ key:'discord_webhook_pengeluaran', value:cfg.webhookPengeluaran || '' }], { onConflict:'key' }),
       sb.from('config').upsert([{ key:'discord_webhook_stok', value:cfg.webhookStok || '' }], { onConflict:'key' }),
       sb.from('config').upsert([{ key:'saldo_awal', value:String(cfg.saldoAwal||0) }], { onConflict:'key' }),
+      sb.from('config').upsert([{ key:'saldo_awal_kotor', value:String(cfg.saldoAwalKotor||0) }], { onConflict:'key' }),
     ]);
   }
   async function dbResetAll(){
@@ -1381,10 +1386,10 @@
       entries.push({
         tanggal: (d.dibersihkanPada||d.tanggal||'').slice(0,10),
         seq: 0,
-        keterangan: `Kas Kotor dibersihkan — ${d.keterangan}`,
+        keterangan: `Uang Kotor dibersihkan — ${d.keterangan}`,
         jenis: 'masuk',
         jumlah: d.nominal,
-        searchHay: `kas kotor ${d.keterangan}`.toLowerCase()
+        searchHay: `uang kotor kas kotor ${d.keterangan}`.toLowerCase()
       });
     });
     state.expenses.forEach(e=>{
@@ -2347,16 +2352,26 @@
   document.getElementById('smMasukBtn').addEventListener('click', ()=> recordStockMove('MASUK'));
   document.getElementById('smKeluarBtn').addEventListener('click', ()=> recordStockMove('KELUAR'));
 
-  // ---------- Arus Kas Kotor ----------
+  // ---------- Arus Uang Kotor ----------
+  document.getElementById('dcAwalBtn').addEventListener('click', async ()=>{
+    const v = prompt('Saldo awal uang kotor (Rp):', state.config.saldoAwalKotor || 0);
+    if(v === null) return;
+    state.config.saldoAwalKotor = Math.max(0, Math.floor(Number(v)) || 0);
+    await dbSaveConfig(state.config);
+    renderAll(); toast('Saldo awal uang kotor disimpan.');
+  });
   function renderDirty(){
-    const kotor = state.dirtyCash.filter(d=>d.status==='KOTOR').reduce((s,d)=>s+d.nominal,0);
-    document.getElementById('dcKotor').textContent = rupiah(kotor);
-    document.getElementById('dcBersih').textContent = rupiah(computeKasBersih());
+    const awal = state.config.saldoAwalKotor || 0;
+    const masuk = state.dirtyCash.reduce((s,d)=>s+d.nominal,0), keluar = computeKasBersih();
+    document.getElementById('dcAwal').textContent = rupiah(awal);
+    document.getElementById('dcMasuk').textContent = rupiah(masuk);
+    document.getElementById('dcKeluar').textContent = rupiah(keluar);
+    document.getElementById('dcAkhir').textContent = rupiah(awal + masuk - keluar);
     const tb = document.getElementById('dirtyRows');
     tb.innerHTML = state.dirtyCash.length ? state.dirtyCash.map(d=>{
       const bersih = d.status === 'BERSIH';
       return `<tr><td>${fmtDateShort(d.tanggal)}</td><td class="num">${rupiah(d.nominal)}</td><td>${esc(d.keterangan)}</td><td><span class="badge ${bersih?'ok':'mid'}">${bersih?'BERSIH':'KOTOR'}</span></td><td>${bersih ? '' : `<button class="btn sm" data-clean-dirty="${d.id}">Bersihkan</button> <button class="icon-btn" data-del-dirty="${d.id}" title="Hapus">✕</button>`}</td></tr>`;
-    }).join('') : '<tr class="empty-row"><td colspan="5">Belum ada catatan kas kotor.</td></tr>';
+    }).join('') : '<tr class="empty-row"><td colspan="5">Belum ada catatan uang kotor.</td></tr>';
   }
   document.getElementById('dcTanggal').value = todayISO();
   document.getElementById('dirtyForm').addEventListener('submit', async (e)=>{
@@ -2369,7 +2384,7 @@
     const { error } = await sb.from('kas_kotor').insert([{ id:d.id, tanggal:d.tanggal, nominal, keterangan:ket, status:'KOTOR', dibuat_pada:d.dibuatPada }]);
     if(error) console.error('insert kas_kotor failed', error);
     e.target.reset(); document.getElementById('dcTanggal').value = todayISO();
-    renderAll(); toast('Kas kotor dicatat.');
+    renderAll(); toast('Uang kotor dicatat.');
   });
   document.getElementById('dirtyRows').addEventListener('click', async (e)=>{
     const clean = e.target.closest('[data-clean-dirty]'), del = e.target.closest('[data-del-dirty]');
@@ -2379,9 +2394,9 @@
       d.status = 'BERSIH'; d.dibersihkanPada = new Date().toISOString();
       const { error } = await sb.from('kas_kotor').update({ status:'BERSIH', dibersihkan_pada:d.dibersihkanPada }).eq('id', d.id);
       if(error) console.error('update kas_kotor failed', error);
-      renderAll(); toast('Kas kotor dibersihkan ke Kas Bersih.');
+      renderAll(); toast('Uang kotor dibersihkan ke Kas Bersih.');
     } else if(del){
-      if(!confirm('Hapus catatan kas kotor ini?')) return;
+      if(!confirm('Hapus catatan uang kotor ini?')) return;
       state.dirtyCash = state.dirtyCash.filter(x=>x.id!==del.dataset.delDirty);
       await sb.from('kas_kotor').delete().eq('id', del.dataset.delDirty);
       renderAll(); toast('Catatan dihapus.');
