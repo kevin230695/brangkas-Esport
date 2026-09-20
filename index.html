@@ -359,12 +359,12 @@
   <section class="view" id="view-item">
     <div class="section-head">
       <h2>Barang <em>Masuk &amp; Keluar</em></h2>
-      <span class="sub">Ubah stok manual — keterangan wajib diisi dan tiap pergerakan tercatat di riwayat</span>
+      <span class="sub">Ubah stok manual — keterangan boleh dikosongkan dan tiap pergerakan tetap tercatat di riwayat</span>
     </div>
-    <form class="item-form" id="stockMoveForm" style="grid-template-columns:2fr 1fr 3fr;">
-      <div class="field"><label>Item</label><select id="smItem" class="sm-item" required></select></div>
-      <div class="field"><label>Jumlah</label><input type="number" id="smJumlah" min="1" step="1" value="1" required></div>
-      <div class="field"><label>Keterangan (wajib)</label><input type="text" id="smKet" placeholder="Contoh: Barang datang dari supplier / rusak / hilang" required></div>
+    <form class="item-form" id="stockMoveForm" style="grid-template-columns:1fr;">
+      <div id="smRows"></div>
+      <div><button type="button" class="btn ghost sm" id="smAddRow">+ Tambah Barang</button></div>
+      <div class="field"><label>Keterangan (opsional, berlaku untuk semua barang)</label><input type="text" id="smKet" placeholder="Contoh: Barang datang dari supplier / rusak / hilang"></div>
       <div class="full">
         <button type="button" class="btn good" id="smMasukBtn">+ Barang Masuk</button>
         <button type="button" class="btn danger" id="smKeluarBtn">− Barang Keluar</button>
@@ -826,7 +826,7 @@
   // ===== KONEKSI DATABASE =====
   // Isi dua baris ini sekali saja. Kalau keduanya terisi, semua pengguna
   // langsung tersambung tanpa perlu memasukkan Project URL & Anon Key.
-  const SUPABASE_URL = 'https://cezptukukcoxlayhyjdu.supabase.co/';       // contoh: 'https://xxxxx.supabase.co'
+  const SUPABASE_URL = 'https://cezptukukcoxlayhyjdu.supabase.co';       // contoh: 'https://xxxxx.supabase.co'
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlenB0dWt1a2NveGxheWh5amR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MjYwNjAsImV4cCI6MjEwNTQwMjA2MH0.JZiTTRQvBkMIjeYsTJzlwAXDQPy1RTvl0G5pImnrPyQ';  // contoh: 'eyJhbGciOi...'
 
   let state = { items: [], orders: [], archives: [], expenses: [], recipes: [], craftingLogs: [], config: { targetBulanan: 100000000, batasStok: 20, currency: 'Rp', saldoAwal: 0, webhookPesanan: '', webhookSelesai: '', webhookPengeluaran: '', webhookStok: '' } };
@@ -2279,30 +2279,59 @@
     const tb = document.getElementById('stockMoveRows');
     tb.innerHTML = state.stockMovements.length ? state.stockMovements.map(m=>{
       const masuk = m.tipe === 'MASUK';
-      return `<tr><td>${fmtDateTime(m.dibuatPada)}</td><td>${esc(m.itemNama)}</td><td><span class="badge ${masuk?'ok':'bad'}">${masuk?'MASUK':'KELUAR'}</span></td><td class="num">${m.jumlah}</td><td class="num">${m.stokSetelah}</td><td>${esc(m.keterangan)}</td></tr>`;
+      return `<tr><td>${fmtDateTime(m.dibuatPada)}</td><td>${esc(m.itemNama)}</td><td><span class="badge ${masuk?'ok':'bad'}">${masuk?'MASUK':'KELUAR'}</span></td><td class="num">${m.jumlah}</td><td class="num">${m.stokSetelah}</td><td>${esc(m.keterangan) || '-'}</td></tr>`;
     }).join('') : '<tr class="empty-row"><td colspan="6">Belum ada pergerakan stok manual.</td></tr>';
   }
-  async function recordStockMove(tipe){
-    const itemId = document.getElementById('smItem').value;
-    const jumlah = Math.floor(Number(document.getElementById('smJumlah').value));
-    const ket = document.getElementById('smKet').value.trim();
-    const item = itemById(itemId);
-    if(!item){ toast('Pilih item dulu.'); return; }
-    if(!(jumlah >= 1)){ toast('Jumlah minimal 1.'); return; }
-    if(!ket){ toast('Keterangan wajib diisi.'); return; }
-    if(tipe === 'KELUAR' && jumlah > item.stok){ toast(`Stok ${item.nama} hanya ${item.stok}.`); return; }
-    item.stok += tipe === 'MASUK' ? jumlah : -jumlah;
-    const mv = { id: uid(), itemId, itemNama: item.nama, tipe, jumlah, stokSetelah: item.stok, keterangan: ket, dibuatPada: new Date().toISOString() };
-    state.stockMovements.unshift(mv);
-    await dbUpdateItemStok(itemId, item.stok);
-    const { error } = await sb.from('stock_movements').insert([{ id:mv.id, item_id:itemId, item_nama:mv.itemNama, tipe, jumlah, stok_setelah:mv.stokSetelah, keterangan:ket, dibuat_pada:mv.dibuatPada }]);
-    if(error) console.error('insert stock_movements failed', error);
-    document.getElementById('smKet').value = ''; document.getElementById('smJumlah').value = 1;
-    renderAll();
-    toast(`Barang ${tipe === 'MASUK' ? 'masuk' : 'keluar'} dicatat.`);
+  function addSmRow(){
+    const row = document.createElement('div');
+    row.className = 'sm-row';
+    row.style.cssText = 'display:grid;grid-template-columns:3fr 1fr auto;gap:10px;align-items:center;margin-bottom:8px;';
+    row.innerHTML = `<select class="sm-item">${itemOptionsHtml()}</select><input type="number" class="sm-qty" min="1" step="1" placeholder="Jumlah"><button type="button" class="icon-btn" title="Hapus baris">✕</button>`;
+    row.querySelector('button').addEventListener('click', ()=>{
+      const box = document.getElementById('smRows');
+      if(box.children.length > 1) row.remove(); else { row.querySelector('select').value = ''; row.querySelector('input').value = ''; }
+    });
+    document.getElementById('smRows').appendChild(row);
   }
-  document.getElementById('smMasukBtn').addEventListener('click', ()=>{ if(document.getElementById('stockMoveForm').reportValidity()) recordStockMove('MASUK'); });
-  document.getElementById('smKeluarBtn').addEventListener('click', ()=>{ if(document.getElementById('stockMoveForm').reportValidity()) recordStockMove('KELUAR'); });
+  function resetSmRows(){ document.getElementById('smRows').innerHTML = ''; addSmRow(); document.getElementById('smKet').value = ''; }
+  document.getElementById('smAddRow').addEventListener('click', addSmRow);
+  addSmRow();
+
+  async function recordStockMove(tipe){
+    const ket = document.getElementById('smKet').value.trim();
+    const lines = [];
+    let bad = null;
+    [...document.querySelectorAll('#smRows .sm-row')].forEach((r, i)=>{
+      const id = r.querySelector('.sm-item').value, raw = r.querySelector('.sm-qty').value;
+      if(!id && raw === '') return;                       // baris kosong diabaikan
+      const jumlah = Math.floor(Number(raw)), item = itemById(id);
+      if(!item) bad = bad || `Baris ${i+1}: pilih item dulu.`;
+      else if(!(jumlah >= 1)) bad = bad || `Baris ${i+1}: jumlah minimal 1.`;
+      else lines.push({ item, jumlah });
+    });
+    if(bad){ toast(bad); return; }
+    if(!lines.length){ toast('Tambahkan minimal satu barang.'); return; }
+    if(tipe === 'KELUAR'){
+      const need = {};
+      lines.forEach(l=>{ need[l.item.id] = (need[l.item.id]||0) + l.jumlah; });
+      for(const id in need){ const it = itemById(id); if(need[id] > it.stok){ toast(`Stok ${it.nama} hanya ${it.stok} (diminta ${need[id]}).`); return; } }
+    }
+    const now = new Date().toISOString(), rows = [];
+    lines.forEach(l=>{
+      l.item.stok += tipe === 'MASUK' ? l.jumlah : -l.jumlah;
+      const mv = { id: uid(), itemId: l.item.id, itemNama: l.item.nama, tipe, jumlah: l.jumlah, stokSetelah: l.item.stok, keterangan: ket, dibuatPada: now };
+      state.stockMovements.unshift(mv);
+      rows.push({ id:mv.id, item_id:mv.itemId, item_nama:mv.itemNama, tipe, jumlah:mv.jumlah, stok_setelah:mv.stokSetelah, keterangan:ket, dibuat_pada:now });
+    });
+    for(const it of new Set(lines.map(l=>l.item))) await dbUpdateItemStok(it.id, it.stok);
+    const { error } = await sb.from('stock_movements').insert(rows);
+    if(error) console.error('insert stock_movements failed', error);
+    resetSmRows();
+    renderAll();
+    toast(`${lines.length} barang ${tipe === 'MASUK' ? 'masuk' : 'keluar'} dicatat.`);
+  }
+  document.getElementById('smMasukBtn').addEventListener('click', ()=> recordStockMove('MASUK'));
+  document.getElementById('smKeluarBtn').addEventListener('click', ()=> recordStockMove('KELUAR'));
 
   // ---------- Arus Kas Kotor ----------
   function renderDirty(){
