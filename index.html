@@ -79,7 +79,14 @@
   .kpi-card{ padding:14px 16px; }
   .kpi-label{ font-size:13px; color:var(--text-faint); }
   .kpi-value{ font-size:22px; font-weight:600; margin-top:4px; }
-  .kpi-value.brass{ color:var(--brass); } .kpi-value.green{ color:var(--green); } .kpi-value.red{ color:var(--red); }
+  .kpi-value.brass{ color:var(--brass); } .kpi-value.green{ color:var(--green); } .kpi-value.red{ color:var(--red); } .kpi-value.gold{ color:var(--gold); }
+  .kpi-card.kpi-icon{ display:flex; align-items:flex-start; gap:12px; }
+  .kpi-card.kpi-icon .kpi-icon-badge{ flex:0 0 auto; width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:17px; border-radius:8px; background:var(--bg-alt); border:1px solid var(--border); }
+  .kpi-card.kpi-icon .kpi-body{ min-width:0; }
+  .info-box{ display:flex; gap:10px; align-items:flex-start; padding:11px 14px; margin:0 0 14px; background:rgba(30,144,255,.08); border:1px solid var(--border-hi); border-radius:var(--r); font-size:13px; color:var(--text-dim); }
+  .info-box .info-icon{ flex:0 0 auto; font-size:15px; line-height:1.3; }
+  .info-box b{ color:var(--text); }
+  .info-box.warn{ background:rgba(255,217,74,.08); border-color:color-mix(in srgb,var(--gold) 45%,var(--border-hi)); }
   .dash-grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:12px; }
   @media(max-width:900px){ .dash-grid{ grid-template-columns:1fr; } }
   .panel{ padding:16px; }
@@ -599,33 +606,34 @@
   <!-- PEMBUKUAN -->
   <section class="view" id="view-pembukuan">
     <div class="section-head">
-      <h2>Pembukuan</h2>
-      <span class="sub">Semua kas masuk dan keluar, lengkap dengan saldo berjalan</span>
+      <h2>📒 Pembukuan</h2>
+      <span class="sub">Catatan semua kas masuk dan kas keluar, lengkap dengan saldo berjalan yang otomatis terhitung</span>
     </div>
 
     <div class="seg" id="lgTabs">
-      <button type="button" class="seg-btn active" data-lg="buku">Buku Kas</button>
-      <button type="button" class="seg-btn" data-lg="kotor">Arus Uang Kotor</button>
+      <button type="button" class="seg-btn active" data-lg="buku">📖 Buku Kas</button>
+      <button type="button" class="seg-btn" data-lg="kotor">🧺 Uang Kotor (Belum Disetor)</button>
     </div>
     <div id="lgPaneBuku">
+    <div class="info-box"><span class="info-icon">💡</span><span>Ini adalah <b>ringkasan kas bersih</b>: kas masuk otomatis tercatat saat pesanan berstatus <b>SELESAI</b>, dan kas keluar otomatis tercatat dari tab <b>Pengeluaran</b>. Kamu tidak perlu input manual di sini.</span></div>
     <div class="cashflow-grid-4">
-      <div class="kpi-card"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="lgSaldoAwal">Rp0</div></div>
-      <div class="kpi-card"><div class="kpi-label">Total Kas Masuk</div><div class="kpi-value" style="color:var(--green);" id="lgMasuk">Rp0</div></div>
-      <div class="kpi-card"><div class="kpi-label">Total Kas Keluar</div><div class="kpi-value" style="color:var(--red);" id="lgKeluar">Rp0</div></div>
-      <div class="kpi-card"><div class="kpi-label">Saldo Akhir</div><div class="kpi-value brass" id="lgSaldoAkhir">Rp0</div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🏦</div><div class="kpi-body"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="lgSaldoAwal">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Total Kas Masuk</div><div class="kpi-value green" id="lgMasuk">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📤</div><div class="kpi-body"><div class="kpi-label">Total Kas Keluar</div><div class="kpi-value red" id="lgKeluar">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">💰</div><div class="kpi-body"><div class="kpi-label">Saldo Akhir</div><div class="kpi-value brass" id="lgSaldoAkhir">Rp0</div></div></div>
     </div>
 
-    <div class="chips" data-from="lgFilterDari" data-to="lgFilterSampai"><button type="button" class="chip" data-range="today">Hari ini</button><button type="button" class="chip" data-range="7">7 hari terakhir</button><button type="button" class="chip" data-range="month">Bulan ini</button><button type="button" class="chip" data-range="all">Semua</button></div>
+    <div class="chips" data-from="lgFilterDari" data-to="lgFilterSampai"><button type="button" class="chip" data-range="today">Hari ini</button><button type="button" class="chip" data-range="7">7 hari terakhir</button><button type="button" class="chip" data-range="month">Bulan ini</button><button type="button" class="chip active" data-range="all">Semua</button></div>
     <div class="filter-bar" style="grid-template-columns:1fr 1fr 2fr 1fr auto;">
       <div class="field"><label>Dari Tanggal</label><input type="date" id="lgFilterDari"></div>
       <div class="field"><label>Sampai Tanggal</label><input type="date" id="lgFilterSampai"></div>
-      <div class="field"><label>Cari keterangan / pemesan / item</label><input type="search" id="lgFilterKeyword" placeholder="Ketik untuk mencari..."></div>
-      <div class="field"><label>Jenis</label><select id="lgFilterJenis"><option value="">Semua</option><option value="masuk">Kas masuk</option><option value="keluar">Kas keluar</option></select></div>
-      <button type="button" class="btn ghost" id="lgFilterResetBtn">Reset Filter</button>
+      <div class="field"><label>🔍 Cari keterangan / pemesan / item</label><input type="search" id="lgFilterKeyword" placeholder="Ketik untuk mencari..."></div>
+      <div class="field"><label>Jenis Transaksi</label><select id="lgFilterJenis"><option value="">Semua</option><option value="masuk">📥 Kas masuk</option><option value="keluar">📤 Kas keluar</option></select></div>
+      <button type="button" class="btn ghost" id="lgFilterResetBtn">↺ Reset Filter</button>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
       <div class="filter-info" id="lgFilterInfo" style="margin:0;"></div>
-      <button type="button" class="btn ghost sm" id="lgCsvBtn">Unduh CSV</button>
+      <button type="button" class="btn ghost sm" id="lgCsvBtn">⬇️ Unduh CSV</button>
     </div>
 
     <div class="table-wrap">
@@ -641,19 +649,19 @@
     </div>
 
     <div id="lgPaneKotor" hidden>
-    <p class="stamp" style="margin:0 0 12px;">Catat uang masuk manual dulu sebagai uang kotor. Setelah tekan <b>Bersihkan</b>, nominalnya pindah ke Kas Bersih dan masuk ke Buku Kas serta saldo.</p>
+    <div class="info-box warn"><span class="info-icon">🧺</span><span>Pakai tab ini untuk mencatat uang yang sudah kamu terima tapi <b>belum resmi disetor</b> (misalnya belum masuk rekening/kasir utama). Setelah kamu tekan <b>Bersihkan</b>, nominalnya baru pindah jadi Kas Bersih dan otomatis muncul di Buku Kas.</span></div>
     <div class="cashflow-grid-4">
-      <div class="kpi-card"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="dcAwal">Rp0</div><button type="button" class="btn ghost sm" id="dcAwalBtn" style="margin-top:8px;">Ubah</button></div>
-      <div class="kpi-card"><div class="kpi-label">Total Kas Masuk</div><div class="kpi-value" style="color:var(--green);" id="dcMasuk">Rp0</div></div>
-      <div class="kpi-card"><div class="kpi-label">Total Kas Keluar</div><div class="kpi-value" style="color:var(--red);" id="dcKeluar">Rp0</div></div>
-      <div class="kpi-card"><div class="kpi-label">Saldo Akhir</div><div class="kpi-value" style="color:var(--gold);" id="dcAkhir">Rp0</div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🏦</div><div class="kpi-body"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="dcAwal">Rp0</div><button type="button" class="btn ghost sm" id="dcAwalBtn" style="margin-top:8px;">✏️ Ubah Saldo Awal</button></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Total Uang Kotor Masuk</div><div class="kpi-value green" id="dcMasuk">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🧼</div><div class="kpi-body"><div class="kpi-label">Sudah Dibersihkan</div><div class="kpi-value red" id="dcKeluar">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">⏳</div><div class="kpi-body"><div class="kpi-label">Sisa Belum Dibersihkan</div><div class="kpi-value gold" id="dcAkhir">Rp0</div></div></div>
     </div>
-    <div class="stamp" style="margin:-6px 0 14px;">Saldo Akhir = Saldo Awal + Total Kas Masuk − Total Kas Keluar. Kas Keluar adalah uang kotor yang sudah dibersihkan ke Kas Bersih, jadi Saldo Akhir adalah uang kotor yang masih tersisa.</div>
+    <div class="stamp" style="margin:-6px 0 14px;">Sisa Belum Dibersihkan = Saldo Awal + Total Uang Kotor Masuk − Sudah Dibersihkan. Semakin kecil angka ini, semakin sedikit uang yang masih mengendap di luar kas utama.</div>
     <form class="item-form" id="dirtyForm" style="grid-template-columns:1fr 1fr 3fr;">
       <div class="field"><label>Tanggal</label><input type="date" id="dcTanggal" required></div>
-      <div class="field"><label>Nominal</label><input type="number" id="dcNominal" min="1" step="1" required></div>
+      <div class="field"><label>Nominal (Rp)</label><input type="number" id="dcNominal" min="1" step="1" placeholder="Contoh: 150000" required></div>
       <div class="field"><label>Keterangan (wajib)</label><input type="text" id="dcKet" placeholder="Contoh: Hasil penjualan belum disetor" required></div>
-      <div class="full"><button type="submit" class="btn">+ Catat Uang Kotor</button></div>
+      <div class="full"><button type="submit" class="btn">➕ Catat Uang Kotor</button></div>
     </form>
     <div style="margin:0 0 10px;"><button type="button" class="btn ghost" id="dcCleanAllBtn" hidden></button></div>
     <div class="table-wrap">
@@ -1621,9 +1629,9 @@
     const tbody = document.getElementById('ledgerRows'), btn = document.getElementById('lgMoreBtn'), LIMIT = 50;
     const esc2 = t => esc(t);
     if(!allEntries.length){
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Belum ada transaksi. Kas masuk muncul saat pesanan berstatus SELESAI, kas keluar dari tab Pengeluaran.</td></tr>'; btn.hidden = true;
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">📭 Belum ada transaksi. Kas masuk akan muncul otomatis saat pesanan berstatus SELESAI, sedangkan kas keluar tercatat otomatis dari tab Pengeluaran.</td></tr>'; btn.hidden = true;
     } else if(!filtered.length){
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Tidak ada transaksi yang cocok dengan filter.</td></tr>'; btn.hidden = true;
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">🔍 Tidak ada transaksi yang cocok dengan filter ini. Coba ubah tanggal atau kata kuncinya.</td></tr>'; btn.hidden = true;
     } else {
       // terbaru dulu; saldo berjalan tetap dihitung kronologis (lama → baru) di atas
       const ordered = filtered.slice().reverse(), shown = lgShowAll ? ordered : ordered.slice(0, LIMIT);
@@ -1661,7 +1669,7 @@
     a.href = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' }));
     a.download = `pembukuan-${todayISO()}.csv`; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=> URL.revokeObjectURL(a.href), 1000);
-    toast('File CSV diunduh (data sesuai filter yang aktif).');
+    toast('✅ File CSV berhasil diunduh (sesuai filter yang aktif).');
   }
   document.getElementById('lgCsvBtn').addEventListener('click', exportLedgerCsv);
   function setLgPane(name){
@@ -2630,7 +2638,7 @@
     if(v === null) return;
     state.config.saldoAwalKotor = Math.max(0, Math.floor(Number(v)) || 0);
     await dbSaveConfig(state.config);
-    renderAll(); toast('Saldo awal uang kotor disimpan.');
+    renderAll(); toast('✅ Saldo awal uang kotor disimpan.');
   });
   document.getElementById('dcCleanAllBtn').addEventListener('click', async ()=>{
     const pending = state.dirtyCash.filter(d=>d.status==='KOTOR'); if(!pending.length) return;
@@ -2642,7 +2650,7 @@
       const { error } = await sb.from('kas_kotor').update({ status:'BERSIH', dibersihkan_pada:now }).eq('id', d.id);
       if(error) console.error('update kas_kotor failed', error);
     }
-    renderAll(); toast(`${pending.length} catatan dibersihkan ke Kas Bersih.`);
+    renderAll(); toast(`🧼 ${pending.length} catatan berhasil dibersihkan ke Kas Bersih.`);
   });
   function renderDirty(){
     const awal = state.config.saldoAwalKotor || 0;
@@ -2652,19 +2660,19 @@
     document.getElementById('dcKeluar').textContent = rupiah(keluar);
     document.getElementById('dcAkhir').textContent = rupiah(awal + masuk - keluar);
     const pending = state.dirtyCash.filter(d=>d.status==='KOTOR'), pendTotal = pending.reduce((a,d)=>a+d.nominal,0), cab = document.getElementById('dcCleanAllBtn');
-    cab.hidden = pending.length < 2; cab.textContent = `Bersihkan semua (${pending.length} catatan · ${rupiah(pendTotal)})`;
+    cab.hidden = pending.length < 2; cab.textContent = `🧼 Bersihkan semua (${pending.length} catatan · ${rupiah(pendTotal)})`;
     const tb = document.getElementById('dirtyRows');
     tb.innerHTML = state.dirtyCash.length ? state.dirtyCash.map(d=>{
       const bersih = d.status === 'BERSIH';
-      return `<tr><td>${fmtDateShort(d.tanggal)}</td><td class="num">${rupiah(d.nominal)}</td><td>${esc(d.keterangan)}</td><td><span class="badge ${bersih?'ok':'mid'}">${bersih?'BERSIH':'KOTOR'}</span></td><td>${bersih ? '' : `<button class="btn sm" data-clean-dirty="${d.id}">Bersihkan</button> <button class="icon-btn" data-del-dirty="${d.id}" title="Hapus">✕</button>`}</td></tr>`;
-    }).join('') : '<tr class="empty-row"><td colspan="5">Belum ada catatan uang kotor.</td></tr>';
+      return `<tr><td>${fmtDateShort(d.tanggal)}</td><td class="num">${rupiah(d.nominal)}</td><td>${esc(d.keterangan)}</td><td><span class="badge ${bersih?'ok':'mid'}">${bersih?'✅ Bersih':'⏳ Belum Bersih'}</span></td><td>${bersih ? '' : `<button class="btn sm" data-clean-dirty="${d.id}" title="Pindahkan ke Kas Bersih">🧼 Bersihkan</button> <button class="icon-btn" data-del-dirty="${d.id}" title="Hapus catatan ini">✕</button>`}</td></tr>`;
+    }).join('') : '<tr class="empty-row"><td colspan="5">🧺 Belum ada catatan uang kotor. Gunakan form di atas untuk mencatat uang yang belum disetor.</td></tr>';
   }
   document.getElementById('dcTanggal').value = todayISO();
   document.getElementById('dirtyForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const nominal = Math.floor(Number(document.getElementById('dcNominal').value));
     const ket = document.getElementById('dcKet').value.trim();
-    if(!(nominal >= 1) || !ket){ toast('Nominal & keterangan wajib diisi.'); return; }
+    if(!(nominal >= 1) || !ket){ toast('⚠️ Nominal & keterangan wajib diisi.'); return; }
     const d = { id: uid(), tanggal: document.getElementById('dcTanggal').value || todayISO(), nominal, keterangan: ket, status:'KOTOR', dibersihkanPada:null, dibuatPada:new Date().toISOString() };
     state.dirtyCash.unshift(d);
     const { error } = await sb.from('kas_kotor').insert([{ id:d.id, tanggal:d.tanggal, nominal, keterangan:ket, status:'KOTOR', dibuat_pada:d.dibuatPada }]);
