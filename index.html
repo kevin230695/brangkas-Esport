@@ -145,6 +145,7 @@
   .recipe-card-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
   input:not([type=hidden]):not([type=checkbox]):not([type=radio]),select{ height:38px; }
   .cell-in{ height:34px; }
+  #expenseRows td{ padding-top:4px; padding-bottom:4px; }
   @media(max-width:900px){ .tab-group{ display:none; } }
   @media(max-width:640px){ .kpi-grid,.cashflow-grid-4,.cashflow-grid,.kpi-grid-3{ grid-template-columns:repeat(2,1fr) !important; } .kpi-card{ padding:12px; } .kpi-value{ font-size:19px; } }
   .chips{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 8px; }
@@ -539,14 +540,13 @@
       <span class="sub">Catat pembelian restock supaya arus kas kelihatan jelas</span>
     </div>
 
-    <div class="cashflow-grid">
-      <div class="kpi-card"><div class="kpi-label">Total Pemasukan</div><div class="kpi-value" style="color:var(--green);" id="cfPemasukan">Rp0</div></div>
-      <div class="kpi-card"><div class="kpi-label">Total Pengeluaran</div><div class="kpi-value" style="color:var(--red);" id="cfPengeluaran">Rp0</div></div>
-      <div class="kpi-card"><div class="kpi-label">Arus Kas Bersih</div><div class="kpi-value brass" id="cfBersih">Rp0</div></div>
+    <div class="cashflow-grid-4">
+      <div class="kpi-card"><div class="kpi-label">Pengeluaran bulan ini</div><div class="kpi-value" style="color:var(--gold);" id="cfBulanIni">Rp0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total pengeluaran</div><div class="kpi-value" style="color:var(--red);" id="cfPengeluaran">Rp0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total pemasukan</div><div class="kpi-value" style="color:var(--green);" id="cfPemasukan">Rp0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Arus kas bersih</div><div class="kpi-value brass" id="cfBersih">Rp0</div></div>
     </div>
-    <div class="stamp" style="color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px; margin:-10px 0 22px;">
-      Arus Kas Bersih = Total Pemasukan (pesanan berstatus SELESAI) − Total Pengeluaran. Belum termasuk Saldo Awal — lihat Pembukuan untuk saldo berjalan lengkap.
-    </div>
+    <div class="stamp" style="margin:-6px 0 18px;">Arus kas bersih = total pemasukan − total pengeluaran, belum termasuk saldo awal. Saldo lengkap ada di tab Pembukuan.</div>
 
     <form class="order-form" id="expenseForm">
       <div class="form-title" style="margin-bottom:12px;">Catat pengeluaran / restock</div>
@@ -562,24 +562,27 @@
         <div id="expCartRows"></div>
       </div>
 
+      <div class="stamp" style="margin:10px 0 0;">Pilih item untuk restock, stoknya otomatis bertambah. Pilih “Tanpa item / lainnya” untuk biaya lain (misal sewa) dan isi keterangan di atas.</div>
       <div class="order-form-foot">
         <button type="button" class="btn ghost sm" id="expCartAddRowBtn">+ Tambah Item</button>
         <div class="cart-summary">
           <span>Total Item: <b id="expCartTotalItems">0</b></span>
           <span>Total Pengeluaran: <b id="expCartTotalBelanja">Rp0</b></span>
         </div>
-        <button type="submit" class="btn">Simpan Pengeluaran</button>
+        <button type="submit" class="btn">Simpan pengeluaran</button>
       </div>
     </form>
 
     <div class="chips" data-from="expFilterTanggalDari" data-to="expFilterTanggalSampai"><button type="button" class="chip" data-range="today">Hari ini</button><button type="button" class="chip" data-range="7">7 hari terakhir</button><button type="button" class="chip" data-range="month">Bulan ini</button><button type="button" class="chip" data-range="all">Semua</button></div>
-    <div class="filter-bar">
+    <div class="filter-bar" style="grid-template-columns:1fr 1fr 2fr 1fr auto;">
       <div class="field"><label>Dari Tanggal</label><input type="date" id="expFilterTanggalDari"></div>
       <div class="field"><label>Sampai Tanggal</label><input type="date" id="expFilterTanggalSampai"></div>
-      <div class="field" style="grid-column:span 2;"><label>Cari Keterangan / Item</label><input type="text" id="expFilterKeyword" placeholder="Cari..."></div>
+      <div class="field"><label>Cari keterangan / item</label><input type="search" id="expFilterKeyword" placeholder="Ketik untuk mencari..."></div>
+      <div class="field"><label>Jenis</label><select id="expFilterJenis"><option value="">Semua</option><option value="restock">Restock item</option><option value="lain">Biaya lain</option></select></div>
       <button type="button" class="btn ghost" id="expFilterResetBtn">Reset Filter</button>
     </div>
     <div class="filter-info" id="expFilterInfo"></div>
+    <p class="stamp" style="margin:0 0 8px;">Klik jumlah, harga, atau keterangan di tabel untuk mengubahnya. Tersimpan otomatis saat pindah kolom atau menekan Enter.</p>
 
     <div class="table-wrap">
       <table>
@@ -590,15 +593,21 @@
         <tbody id="expenseRows"></tbody>
       </table>
     </div>
+    <div style="margin:-6px 0 8px;"><button type="button" class="btn ghost sm" id="expMoreBtn" hidden></button></div>
   </section>
 
   <!-- PEMBUKUAN -->
   <section class="view" id="view-pembukuan">
     <div class="section-head">
-      <h2>Pembukuan <em>Arus Kas</em></h2>
-      <span class="sub">Rincian kronologis semua transaksi kas masuk (pesanan) dan kas keluar (pengeluaran), lengkap dengan saldo berjalan</span>
+      <h2>Pembukuan</h2>
+      <span class="sub">Semua kas masuk dan keluar, lengkap dengan saldo berjalan</span>
     </div>
 
+    <div class="seg" id="lgTabs">
+      <button type="button" class="seg-btn active" data-lg="buku">Buku Kas</button>
+      <button type="button" class="seg-btn" data-lg="kotor">Arus Uang Kotor</button>
+    </div>
+    <div id="lgPaneBuku">
     <div class="cashflow-grid-4">
       <div class="kpi-card"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="lgSaldoAwal">Rp0</div></div>
       <div class="kpi-card"><div class="kpi-label">Total Kas Masuk</div><div class="kpi-value" style="color:var(--green);" id="lgMasuk">Rp0</div></div>
@@ -607,13 +616,17 @@
     </div>
 
     <div class="chips" data-from="lgFilterDari" data-to="lgFilterSampai"><button type="button" class="chip" data-range="today">Hari ini</button><button type="button" class="chip" data-range="7">7 hari terakhir</button><button type="button" class="chip" data-range="month">Bulan ini</button><button type="button" class="chip" data-range="all">Semua</button></div>
-    <div class="filter-bar">
+    <div class="filter-bar" style="grid-template-columns:1fr 1fr 2fr 1fr auto;">
       <div class="field"><label>Dari Tanggal</label><input type="date" id="lgFilterDari"></div>
       <div class="field"><label>Sampai Tanggal</label><input type="date" id="lgFilterSampai"></div>
-      <div class="field" style="grid-column:span 2;"><label>Cari Keterangan / Pemesan / Item</label><input type="text" id="lgFilterKeyword" placeholder="Cari..."></div>
+      <div class="field"><label>Cari keterangan / pemesan / item</label><input type="search" id="lgFilterKeyword" placeholder="Ketik untuk mencari..."></div>
+      <div class="field"><label>Jenis</label><select id="lgFilterJenis"><option value="">Semua</option><option value="masuk">Kas masuk</option><option value="keluar">Kas keluar</option></select></div>
       <button type="button" class="btn ghost" id="lgFilterResetBtn">Reset Filter</button>
     </div>
-    <div class="filter-info" id="lgFilterInfo"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
+      <div class="filter-info" id="lgFilterInfo" style="margin:0;"></div>
+      <button type="button" class="btn ghost sm" id="lgCsvBtn">Unduh CSV</button>
+    </div>
 
     <div class="table-wrap">
       <table>
@@ -624,11 +637,11 @@
         <tbody id="ledgerRows"></tbody>
       </table>
     </div>
-
-    <div class="section-head" style="margin-top:34px;">
-      <h2>Arus Uang <em>Kotor</em></h2>
-      <span class="sub">Catat uang masuk manual dulu sebagai uang kotor, tekan BERSIHKAN untuk memindahkannya ke Kas Bersih (masuk ke Pembukuan &amp; Saldo)</span>
+    <div style="margin:-6px 0 8px;"><button type="button" class="btn ghost sm" id="lgMoreBtn" hidden></button></div>
     </div>
+
+    <div id="lgPaneKotor" hidden>
+    <p class="stamp" style="margin:0 0 12px;">Catat uang masuk manual dulu sebagai uang kotor. Setelah tekan <b>Bersihkan</b>, nominalnya pindah ke Kas Bersih dan masuk ke Buku Kas serta saldo.</p>
     <div class="cashflow-grid-4">
       <div class="kpi-card"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="dcAwal">Rp0</div><button type="button" class="btn ghost sm" id="dcAwalBtn" style="margin-top:8px;">Ubah</button></div>
       <div class="kpi-card"><div class="kpi-label">Total Kas Masuk</div><div class="kpi-value" style="color:var(--green);" id="dcMasuk">Rp0</div></div>
@@ -642,11 +655,13 @@
       <div class="field"><label>Keterangan (wajib)</label><input type="text" id="dcKet" placeholder="Contoh: Hasil penjualan belum disetor" required></div>
       <div class="full"><button type="submit" class="btn">+ Catat Uang Kotor</button></div>
     </form>
+    <div style="margin:0 0 10px;"><button type="button" class="btn ghost" id="dcCleanAllBtn" hidden></button></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Tanggal</th><th class="num">Nominal</th><th>Keterangan</th><th>Status</th><th></th></tr></thead>
         <tbody id="dirtyRows"></tbody>
       </table>
+    </div>
     </div>
   </section>
 
@@ -955,7 +970,7 @@
   ];
 
   function uid(){ return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
-  function rupiah(n){ return (state.config.currency||'Rp') + Number(n||0).toLocaleString('id-ID'); }
+  function rupiah(n){ n = Number(n||0); return (n < 0 ? '-' : '') + (state.config.currency||'Rp') + Math.abs(n).toLocaleString('id-ID'); }
   function spBadge(sp){
     sp = sp || 'DIPROSES';
     const cls = sp === 'SELESAI' ? 'ok' : (sp === 'DIBATALKAN' ? 'bad' : 'mid');
@@ -1297,7 +1312,7 @@
   }
   function expItemOptionsHtml(){
     return '<option value="">— Tanpa item / lainnya —</option>' +
-      state.items.map(i=>`<option value="${i.id}">${i.nama} (${i.kategori})</option>`).join('');
+      state.items.map(i=>`<option value="${i.id}">${esc(i.nama)} (${esc(i.kategori)}) — stok ${i.stok}</option>`).join('');
   }
   function renderItemOptions(){
     document.querySelectorAll('.cart-item').forEach(sel=>{
@@ -1449,61 +1464,77 @@
   document.getElementById('itemCancelBtn').addEventListener('click', ()=>{ document.getElementById('itemForm').hidden = true; });
 
   // ---------- Pengeluaran (restock expenses) ----------
-  let expenseFilters = { tanggalDari:'', tanggalSampai:'', keyword:'' };
+  let expenseFilters = { tanggalDari:'', tanggalSampai:'', keyword:'', jenis:'' };
+  let expShowAll = false;
   function applyExpenseFilters(list){
     return list.filter(e=>{
       if(expenseFilters.tanggalDari && (e.tanggal||'') < expenseFilters.tanggalDari) return false;
       if(expenseFilters.tanggalSampai && (e.tanggal||'') > expenseFilters.tanggalSampai) return false;
+      if(expenseFilters.jenis === 'restock' && !e.itemId) return false;
+      if(expenseFilters.jenis === 'lain' && e.itemId) return false;
       if(expenseFilters.keyword){
-        const kw = expenseFilters.keyword.toLowerCase();
         const hay = ((e.itemNama||'') + ' ' + (e.keterangan||'')).toLowerCase();
-        if(!hay.includes(kw)) return false;
+        if(!hay.includes(expenseFilters.keyword.toLowerCase())) return false;
       }
       return true;
     });
   }
   function renderExpenses(){
     const filtered = applyExpenseFilters(state.expenses);
-    const tbody = document.getElementById('expenseRows');
+    // ringkasan
+    const totalPengeluaran = computeTotalPengeluaran();
+    const totalPemasukan = computeTotalPemasukanSelesai() + computeKasBersih();
+    const bersih = totalPemasukan - totalPengeluaran, bulan = todayISO().slice(0,7);
+    document.getElementById('cfPemasukan').textContent = rupiah(totalPemasukan);
+    document.getElementById('cfPengeluaran').textContent = rupiah(totalPengeluaran);
+    document.getElementById('cfBulanIni').textContent = rupiah(state.expenses.filter(e=>(e.tanggal||'').startsWith(bulan)).reduce((a,e)=>a+e.total,0));
+    const cfB = document.getElementById('cfBersih'); cfB.textContent = rupiah(bersih); cfB.style.color = bersih < 0 ? 'var(--red)' : 'var(--brass)';
+    const active = !!(expenseFilters.tanggalDari || expenseFilters.tanggalSampai || expenseFilters.keyword || expenseFilters.jenis);
+    document.getElementById('expFilterInfo').textContent = filtered.length
+      ? `${filtered.length} baris · total ${rupiah(filtered.reduce((a,e)=>a+e.total,0))}` + (active ? ` (filter aktif, dari ${state.expenses.length} baris)` : '') : '';
+
+    // jangan timpa kolom yang sedang diedit
+    const ae = document.activeElement;
+    if(ae && ae.classList && ae.classList.contains('cell-in') && ae.closest('#expenseRows')) return;
+
+    const tbody = document.getElementById('expenseRows'), btn = document.getElementById('expMoreBtn'), LIMIT = 30;
     if(!state.expenses.length){
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Belum ada pengeluaran tercatat.</td></tr>';
-    } else if(!filtered.length){
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Tidak ada pengeluaran yang cocok dengan filter.</td></tr>';
-    } else {
-      const sorted = filtered.slice().sort((a,b)=> (b.tanggal||'').localeCompare(a.tanggal||''));
-      tbody.innerHTML = sorted.map(e=>`<tr>
-        <td>${fmtDateShort(e.tanggal)}</td>
-        <td>${e.itemNama || '-'}</td>
-        <td class="num"><input type="number" class="jumlah-input" min="1" style="width:70px;" data-jumlah-expense="${e.id}" value="${e.jumlah}"></td>
-        <td class="num"><input type="number" class="harga-satuan-input" min="0" style="width:100px;" data-harga-expense="${e.id}" value="${e.hargaSatuan}"></td>
-        <td class="num" data-total-expense="${e.id}">${rupiah(e.total)}</td>
-        <td><input type="text" class="keterangan-input" data-keterangan-expense="${e.id}" value="${(e.keterangan||'').replace(/"/g,'&quot;')}" placeholder="Tambah catatan..."></td>
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Belum ada pengeluaran. Catat pembelian restock atau biaya lain lewat form di atas.</td></tr>'; btn.hidden = true; return;
+    }
+    if(!filtered.length){
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Tidak ada pengeluaran yang cocok dengan filter.</td></tr>'; btn.hidden = true; return;
+    }
+    const sorted = filtered.slice().sort((a,b)=> (b.tanggal||'').localeCompare(a.tanggal||'')), shown = expShowAll ? sorted : sorted.slice(0, LIMIT);
+    tbody.innerHTML = shown.map(e=>`<tr>
+        <td style="white-space:nowrap">${fmtDateShort(e.tanggal)}</td>
+        <td>${esc(e.itemNama || '-')}${e.itemId ? '' : ' <span class="badge mid">Biaya lain</span>'}</td>
+        <td class="num"><input type="number" class="cell-in n jumlah-input" min="1" style="min-width:70px" data-jumlah-expense="${e.id}" value="${e.jumlah}"></td>
+        <td class="num"><input type="number" class="cell-in n harga-satuan-input" min="0" style="min-width:100px" data-harga-expense="${e.id}" value="${e.hargaSatuan}"></td>
+        <td class="num" data-total-expense="${e.id}"><b>${rupiah(e.total)}</b></td>
+        <td><input type="text" class="cell-in keterangan-input" style="min-width:180px" data-keterangan-expense="${e.id}" value="${esc(e.keterangan||'')}" placeholder="Tambah catatan..."></td>
         <td><button class="icon-btn" data-del-expense="${e.id}" title="Hapus">✕</button></td>
       </tr>`).join('');
-    }
-    const infoEl = document.getElementById('expFilterInfo');
-    const isActive = !!(expenseFilters.tanggalDari || expenseFilters.tanggalSampai || expenseFilters.keyword);
-    infoEl.textContent = isActive ? `Menampilkan ${filtered.length} dari ${state.expenses.length} baris (filter aktif)` : '';
-
-    const totalPengeluaran = computeTotalPengeluaran();
-    const totalPemasukanSelesai = computeTotalPemasukanSelesai() + computeKasBersih();
-    document.getElementById('cfPemasukan').textContent = rupiah(totalPemasukanSelesai);
-    document.getElementById('cfPengeluaran').textContent = rupiah(totalPengeluaran);
-    const bersih = totalPemasukanSelesai - totalPengeluaran;
-    const cfBersihEl = document.getElementById('cfBersih');
-    cfBersihEl.textContent = rupiah(bersih);
-    cfBersihEl.style.color = bersih < 0 ? 'var(--red)' : 'var(--brass)';
+    btn.hidden = sorted.length <= LIMIT;
+    btn.textContent = expShowAll ? 'Tampilkan lebih sedikit' : `Tampilkan semua (${sorted.length} baris)`;
   }
-
+  document.getElementById('expMoreBtn').addEventListener('click', ()=>{ expShowAll = !expShowAll; renderExpenses(); });
   document.getElementById('expFilterTanggalDari').addEventListener('input', (e)=>{ expenseFilters.tanggalDari = e.target.value; renderExpenses(); });
   document.getElementById('expFilterTanggalSampai').addEventListener('input', (e)=>{ expenseFilters.tanggalSampai = e.target.value; renderExpenses(); });
   document.getElementById('expFilterKeyword').addEventListener('input', (e)=>{ expenseFilters.keyword = e.target.value.trim(); renderExpenses(); });
+  document.getElementById('expFilterJenis').addEventListener('input', (e)=>{ expenseFilters.jenis = e.target.value; renderExpenses(); });
   document.getElementById('expFilterResetBtn').addEventListener('click', ()=>{
-    expenseFilters = { tanggalDari:'', tanggalSampai:'', keyword:'' };
-    document.getElementById('expFilterTanggalDari').value = '';
-    document.getElementById('expFilterTanggalSampai').value = '';
-    document.getElementById('expFilterKeyword').value = '';
+    expenseFilters = { tanggalDari:'', tanggalSampai:'', keyword:'', jenis:'' };
+    ['expFilterTanggalDari','expFilterTanggalSampai','expFilterKeyword','expFilterJenis'].forEach(id=> document.getElementById(id).value = '');
+    document.querySelectorAll('[data-from="expFilterTanggalDari"] .chip').forEach(c=>c.classList.remove('active'));
     renderExpenses();
+  });
+  // isi otomatis harga satuan dari pembelian terakhir item yang sama
+  document.getElementById('expCartRows').addEventListener('change', (e)=>{
+    if(!e.target.classList.contains('exp-item') || !e.target.value) return;
+    const row = e.target.closest('.exp-cart-row'), hi = row.querySelector('.exp-harga-input');
+    if(hi.value) return;
+    const last = state.expenses.filter(x=>x.itemId===e.target.value).sort((a,b)=>(b.tanggal||'').localeCompare(a.tanggal||''))[0];
+    if(last){ hi.value = last.hargaSatuan; recalcExpRow(row); }
   });
 
   // ---------- Pembukuan (buku besar / ledger) ----------
@@ -1536,7 +1567,7 @@
       entries.push({
         tanggal: e.tanggal || '',
         seq: 0,
-        keterangan: e.keterangan ? e.keterangan : (e.itemNama ? `Restock ${e.itemNama}` : 'Pengeluaran'),
+        keterangan: e.itemId ? (e.keterangan ? `${e.keterangan} — ${e.itemNama} ×${e.jumlah}` : `Restock ${e.itemNama} ×${e.jumlah}`) : (e.keterangan || e.itemNama || 'Pengeluaran'),
         jenis: 'keluar',
         jumlah: e.total,
         searchHay: `${e.itemNama||''} ${e.keterangan||''}`.toLowerCase()
@@ -1554,6 +1585,7 @@
     return entries.filter(en=>{
       if(ledgerFilters.tanggalDari && (en.tanggal||'') < ledgerFilters.tanggalDari) return false;
       if(ledgerFilters.tanggalSampai && (en.tanggal||'') > ledgerFilters.tanggalSampai) return false;
+      if(ledgerFilters.jenis && en.jenis !== ledgerFilters.jenis) return false;
       if(ledgerFilters.keyword){
         const kw = ledgerFilters.keyword.toLowerCase();
         if(!en.searchHay.includes(kw)) return false;
@@ -1586,40 +1618,66 @@
     saldoAkhirEl.textContent = rupiah(saldoAkhir);
     saldoAkhirEl.style.color = saldoAkhir < 0 ? 'var(--red)' : 'var(--brass)';
 
-    const tbody = document.getElementById('ledgerRows');
+    const tbody = document.getElementById('ledgerRows'), btn = document.getElementById('lgMoreBtn'), LIMIT = 50;
+    const esc2 = t => esc(t);
     if(!allEntries.length){
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Belum ada transaksi tercatat.</td></tr>';
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Belum ada transaksi. Kas masuk muncul saat pesanan berstatus SELESAI, kas keluar dari tab Pengeluaran.</td></tr>'; btn.hidden = true;
     } else if(!filtered.length){
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Tidak ada transaksi yang cocok dengan filter.</td></tr>';
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Tidak ada transaksi yang cocok dengan filter.</td></tr>'; btn.hidden = true;
     } else {
-      // tampilkan urut terbaru dulu, tapi saldo berjalan tetap dihitung kronologis (lama->baru) di atas
-      const rows = filtered.slice().reverse().map(en=>{
-        const saldoAt = runningByEntry.get(en);
+      // terbaru dulu; saldo berjalan tetap dihitung kronologis (lama → baru) di atas
+      const ordered = filtered.slice().reverse(), shown = lgShowAll ? ordered : ordered.slice(0, LIMIT);
+      const rows = shown.map(en=>{
         const isMasuk = en.jenis === 'masuk';
         return `<tr>
-          <td>${fmtDateShort(en.tanggal)}</td>
-          <td>${en.keterangan}</td>
+          <td style="white-space:nowrap">${fmtDateShort(en.tanggal)}</td>
+          <td>${esc2(en.keterangan)}</td>
           <td><span class="ledger-badge ${isMasuk?'masuk':'keluar'}">${isMasuk?'Kas Masuk':'Kas Keluar'}</span></td>
           <td class="num ledger-num-pos">${isMasuk ? rupiah(en.jumlah) : '-'}</td>
           <td class="num ledger-num-neg">${!isMasuk ? rupiah(en.jumlah) : '-'}</td>
-          <td class="num">${rupiah(saldoAt)}</td>
+          <td class="num"><b>${rupiah(runningByEntry.get(en))}</b></td>
         </tr>`;
       });
-      tbody.innerHTML = `<tr class="ledger-saldo-row"><td colspan="5">Saldo Awal</td><td class="num">${rupiah(saldoAwal)}</td></tr>` + rows.join('');
+      const awalRow = (lgShowAll || ordered.length <= LIMIT) ? `<tr class="ledger-saldo-row"><td colspan="5">Saldo Awal</td><td class="num">${rupiah(saldoAwal)}</td></tr>` : '';
+      tbody.innerHTML = rows.join('') + awalRow;
+      btn.hidden = ordered.length <= LIMIT;
+      btn.textContent = lgShowAll ? 'Tampilkan lebih sedikit' : `Tampilkan semua (${ordered.length} transaksi)`;
     }
 
-    const infoEl = document.getElementById('lgFilterInfo');
-    const isActive = !!(ledgerFilters.tanggalDari || ledgerFilters.tanggalSampai || ledgerFilters.keyword);
-    infoEl.textContent = isActive ? `Menampilkan ${filtered.length} dari ${allEntries.length} transaksi (filter aktif)` : '';
+    const active = !!(ledgerFilters.tanggalDari || ledgerFilters.tanggalSampai || ledgerFilters.keyword || ledgerFilters.jenis);
+    const fm = filtered.filter(en=>en.jenis==='masuk').reduce((a,en)=>a+en.jumlah,0), fk = filtered.filter(en=>en.jenis==='keluar').reduce((a,en)=>a+en.jumlah,0);
+    document.getElementById('lgFilterInfo').textContent = filtered.length
+      ? `${filtered.length} transaksi · masuk ${rupiah(fm)} · keluar ${rupiah(fk)}` + (active ? ' (filter aktif)' : '') : '';
   }
+  let lgShowAll = false;
+  document.getElementById('lgMoreBtn').addEventListener('click', ()=>{ lgShowAll = !lgShowAll; renderPembukuan(); });
+  function exportLedgerCsv(){
+    const all = buildLedgerEntries(), map = new Map(); let run = state.config.saldoAwal || 0;
+    all.forEach(en=>{ run += en.jenis === 'masuk' ? en.jumlah : -en.jumlah; map.set(en, run); });
+    const q = v => `"${String(v).replace(/"/g,'""')}"`;
+    const lines = [['Tanggal','Keterangan','Jenis','Kas Masuk','Kas Keluar','Saldo Berjalan'].map(q).join(';')];
+    applyLedgerFilters(all).forEach(en=> lines.push([en.tanggal, en.keterangan, en.jenis==='masuk'?'Kas Masuk':'Kas Keluar', en.jenis==='masuk'?en.jumlah:0, en.jenis==='keluar'?en.jumlah:0, map.get(en)].map(q).join(';')));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' }));
+    a.download = `pembukuan-${todayISO()}.csv`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(a.href), 1000);
+    toast('File CSV diunduh (data sesuai filter yang aktif).');
+  }
+  document.getElementById('lgCsvBtn').addEventListener('click', exportLedgerCsv);
+  function setLgPane(name){
+    document.querySelectorAll('#lgTabs .seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.lg === name));
+    document.getElementById('lgPaneBuku').hidden = name !== 'buku';
+    document.getElementById('lgPaneKotor').hidden = name !== 'kotor';
+  }
+  document.getElementById('lgTabs').addEventListener('click', e=>{ const b = e.target.closest('.seg-btn'); if(b) setLgPane(b.dataset.lg); });
   document.getElementById('lgFilterDari').addEventListener('input', (e)=>{ ledgerFilters.tanggalDari = e.target.value; renderPembukuan(); });
   document.getElementById('lgFilterSampai').addEventListener('input', (e)=>{ ledgerFilters.tanggalSampai = e.target.value; renderPembukuan(); });
   document.getElementById('lgFilterKeyword').addEventListener('input', (e)=>{ ledgerFilters.keyword = e.target.value.trim(); renderPembukuan(); });
+  document.getElementById('lgFilterJenis').addEventListener('input', (e)=>{ ledgerFilters.jenis = e.target.value; renderPembukuan(); });
   document.getElementById('lgFilterResetBtn').addEventListener('click', ()=>{
-    ledgerFilters = { tanggalDari:'', tanggalSampai:'', keyword:'' };
-    document.getElementById('lgFilterDari').value = '';
-    document.getElementById('lgFilterSampai').value = '';
-    document.getElementById('lgFilterKeyword').value = '';
+    ledgerFilters = { tanggalDari:'', tanggalSampai:'', keyword:'', jenis:'' };
+    ['lgFilterDari','lgFilterSampai','lgFilterKeyword','lgFilterJenis'].forEach(id=> document.getElementById(id).value = '');
+    document.querySelectorAll('[data-from="lgFilterDari"] .chip').forEach(c=>c.classList.remove('active'));
     renderPembukuan();
   });
 
@@ -2574,6 +2632,18 @@
     await dbSaveConfig(state.config);
     renderAll(); toast('Saldo awal uang kotor disimpan.');
   });
+  document.getElementById('dcCleanAllBtn').addEventListener('click', async ()=>{
+    const pending = state.dirtyCash.filter(d=>d.status==='KOTOR'); if(!pending.length) return;
+    const total = pending.reduce((a,d)=>a+d.nominal,0);
+    if(!confirm(`Pindahkan ${pending.length} catatan senilai ${rupiah(total)} ke Kas Bersih?`)) return;
+    const now = new Date().toISOString();
+    for(const d of pending){
+      d.status = 'BERSIH'; d.dibersihkanPada = now;
+      const { error } = await sb.from('kas_kotor').update({ status:'BERSIH', dibersihkan_pada:now }).eq('id', d.id);
+      if(error) console.error('update kas_kotor failed', error);
+    }
+    renderAll(); toast(`${pending.length} catatan dibersihkan ke Kas Bersih.`);
+  });
   function renderDirty(){
     const awal = state.config.saldoAwalKotor || 0;
     const masuk = state.dirtyCash.reduce((s,d)=>s+d.nominal,0), keluar = computeKasBersih();
@@ -2581,6 +2651,8 @@
     document.getElementById('dcMasuk').textContent = rupiah(masuk);
     document.getElementById('dcKeluar').textContent = rupiah(keluar);
     document.getElementById('dcAkhir').textContent = rupiah(awal + masuk - keluar);
+    const pending = state.dirtyCash.filter(d=>d.status==='KOTOR'), pendTotal = pending.reduce((a,d)=>a+d.nominal,0), cab = document.getElementById('dcCleanAllBtn');
+    cab.hidden = pending.length < 2; cab.textContent = `Bersihkan semua (${pending.length} catatan · ${rupiah(pendTotal)})`;
     const tb = document.getElementById('dirtyRows');
     tb.innerHTML = state.dirtyCash.length ? state.dirtyCash.map(d=>{
       const bersih = d.status === 'BERSIH';
