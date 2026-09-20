@@ -589,6 +589,26 @@
         <tbody id="itemRows"></tbody>
       </table>
     </div>
+
+    <div class="section-head" style="margin-top:34px;">
+      <h2>Barang <em>Masuk &amp; Keluar</em></h2>
+      <span class="sub">Ubah stok manual — keterangan wajib diisi dan tiap pergerakan tercatat di riwayat</span>
+    </div>
+    <form class="item-form" id="stockMoveForm" style="grid-template-columns:2fr 1fr 3fr;">
+      <div class="field"><label>Item</label><select id="smItem" class="sm-item" required></select></div>
+      <div class="field"><label>Jumlah</label><input type="number" id="smJumlah" min="1" step="1" value="1" required></div>
+      <div class="field"><label>Keterangan (wajib)</label><input type="text" id="smKet" placeholder="Contoh: Barang datang dari supplier / rusak / hilang" required></div>
+      <div class="full">
+        <button type="button" class="btn" id="smMasukBtn" style="background:var(--green);color:#06210f;">+ Barang Masuk</button>
+        <button type="button" class="btn" id="smKeluarBtn" style="background:var(--red);color:#2a0808;">− Barang Keluar</button>
+      </div>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Waktu</th><th>Item</th><th>Jenis</th><th class="num">Jumlah</th><th class="num">Stok Setelah</th><th>Keterangan</th></tr></thead>
+        <tbody id="stockMoveRows"></tbody>
+      </table>
+    </div>
   </section>
 
   <!-- CRAFTING -->
@@ -725,6 +745,27 @@
           <th class="num">Kas Masuk</th><th class="num">Kas Keluar</th><th class="num">Saldo Berjalan</th>
         </tr></thead>
         <tbody id="ledgerRows"></tbody>
+      </table>
+    </div>
+
+    <div class="section-head" style="margin-top:34px;">
+      <h2>Arus Kas <em>Kotor</em></h2>
+      <span class="sub">Catat uang masuk manual dulu sebagai kas kotor, tekan BERSIHKAN untuk memindahkannya ke Kas Bersih (masuk ke Pembukuan &amp; Saldo)</span>
+    </div>
+    <div class="cashflow-grid">
+      <div class="kpi-card"><div class="kpi-label">Kas Kotor (Belum Dibersihkan)</div><div class="kpi-value" style="color:var(--gold);" id="dcKotor">Rp0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Sudah Dibersihkan</div><div class="kpi-value" style="color:var(--green);" id="dcBersih">Rp0</div></div>
+    </div>
+    <form class="item-form" id="dirtyForm" style="grid-template-columns:1fr 1fr 3fr;">
+      <div class="field"><label>Tanggal</label><input type="date" id="dcTanggal" required></div>
+      <div class="field"><label>Nominal</label><input type="number" id="dcNominal" min="1" step="1" required></div>
+      <div class="field"><label>Keterangan (wajib)</label><input type="text" id="dcKet" placeholder="Contoh: Hasil penjualan belum disetor" required></div>
+      <div class="full"><button type="submit" class="btn">+ Catat Kas Kotor</button></div>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tanggal</th><th class="num">Nominal</th><th>Keterangan</th><th>Status</th><th></th></tr></thead>
+        <tbody id="dirtyRows"></tbody>
       </table>
     </div>
   </section>
@@ -965,6 +1006,7 @@
   "use strict";
 
   let state = { items: [], orders: [], archives: [], expenses: [], recipes: [], craftingLogs: [], config: { targetBulanan: 100000000, batasStok: 20, currency: 'Rp', saldoAwal: 0, webhookPesanan: '', webhookSelesai: '', webhookPengeluaran: '', webhookStok: '' } };
+  state.stockMovements = []; state.dirtyCash = [];
   let filters = { tanggalDari: '', tanggalSampai: '', pemesan: '', status: '', statusPesanan: '' };
   let ledgerFilters = { tanggalDari: '', tanggalSampai: '', keyword: '' };
 
@@ -1045,6 +1087,10 @@
   function rowsToRecipe(r){ return { id:r.id, nama:r.nama, resultItemId:r.result_item_id, resultJumlah:Number(r.result_jumlah)||1, bahan:(r.bahan||[]) }; }
   function rowsToCraftingLog(r){ return { id:r.id, recipeId:r.recipe_id, namaResep:r.nama_resep, resultItemId:r.result_item_id, namaHasil:r.nama_hasil, jumlahCraft:Number(r.jumlah_craft), hasilJumlah:Number(r.hasil_jumlah), bahanTerpakai:(r.bahan_terpakai||[]), dibuatPada:r.dibuat_pada }; }
 
+  function rowsToStockMove(r){ return { id:r.id, itemId:r.item_id, itemNama:r.item_nama||'', tipe:r.tipe, jumlah:Number(r.jumlah), stokSetelah:Number(r.stok_setelah), keterangan:r.keterangan||'', dibuatPada:r.dibuat_pada }; }
+  function rowsToDirty(r){ return { id:r.id, tanggal:r.tanggal, nominal:Number(r.nominal), keterangan:r.keterangan||'', status:r.status||'KOTOR', dibersihkanPada:r.dibersihkan_pada, dibuatPada:r.dibuat_pada }; }
+  const esc = t => String(t==null?'':t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
   // ---------- Storage (Supabase) ----------
   async function loadAll(){
     const { data: itemRows, error: e1 } = await sb.from('items').select('*');
@@ -1077,6 +1123,14 @@
     const { data: craftLogRows, error: e7 } = await sb.from('crafting_log').select('*');
     if(e7) throw e7;
     state.craftingLogs = (craftLogRows||[]).map(rowsToCraftingLog);
+
+    const { data: smRows, error: e8 } = await sb.from('stock_movements').select('*').order('dibuat_pada', { ascending:false }).limit(200);
+    if(e8) throw e8;
+    state.stockMovements = (smRows||[]).map(rowsToStockMove);
+
+    const { data: dcRows, error: e9 } = await sb.from('kas_kotor').select('*').order('dibuat_pada', { ascending:false });
+    if(e9) throw e9;
+    state.dirtyCash = (dcRows||[]).map(rowsToDirty);
 
     const { data: cfgRows, error: e3 } = await sb.from('config').select('*');
     if(e3) throw e3;
@@ -1221,6 +1275,8 @@
     await sb.from('archive').delete().neq('id','__none__');
     await sb.from('pengeluaran').delete().neq('id','__none__');
     await sb.from('crafting_log').delete().neq('id','__none__');
+    await sb.from('stock_movements').delete().neq('id','__none__');
+    await sb.from('kas_kotor').delete().neq('id','__none__');
     await sb.from('resep').delete().neq('id','__none__');
     await sb.from('items').delete().neq('id','__none__');
     const seed = DEFAULT_ITEMS.map(i=>({ id:i.id, nama:i.nama, kategori:i.kategori, harga_a:i.hargaA, max_a:i.maxA, harga_n:i.hargaN, max_n:i.maxN, stok:i.stok }));
@@ -1243,6 +1299,8 @@
       .on('postgres_changes', { event:'*', schema:'public', table:'pengeluaran' }, async ()=>{ await reloadAndRender(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'resep' }, async ()=>{ await reloadAndRender(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'crafting_log' }, async ()=>{ await reloadAndRender(); })
+      .on('postgres_changes', { event:'*', schema:'public', table:'stock_movements' }, async ()=>{ await reloadAndRender(); })
+      .on('postgres_changes', { event:'*', schema:'public', table:'kas_kotor' }, async ()=>{ await reloadAndRender(); })
       .subscribe();
   }
   async function reloadAndRender(){
@@ -1274,6 +1332,7 @@
   function computeTotalPemasukanSelesai(){
     return state.orders.reduce((sum, o) => (o.statusPesanan === 'SELESAI' ? sum + (o.total||0) : sum), 0);
   }
+  function computeKasBersih(){ return state.dirtyCash.reduce((s,d)=> d.status==='BERSIH' ? s+d.nominal : s, 0); }
   function itemByName(name){ return state.items.find(i=>i.nama===name); }
 
   function computeOrder(jenis, itemId, jumlah){
@@ -1306,7 +1365,7 @@
       sel.innerHTML = expItemOptionsHtml();
       if(cur) sel.value = cur;
     });
-    document.querySelectorAll('.recipe-result-select, .bahan-item-select').forEach(sel=>{
+    document.querySelectorAll('.recipe-result-select, .bahan-item-select, .sm-item').forEach(sel=>{
       const cur = sel.value;
       sel.innerHTML = itemOptionsHtml();
       if(cur) sel.value = cur;
@@ -1450,7 +1509,7 @@
     infoEl.textContent = isActive ? `Menampilkan ${filtered.length} dari ${state.expenses.length} baris (filter aktif)` : '';
 
     const totalPengeluaran = computeTotalPengeluaran();
-    const totalPemasukanSelesai = computeTotalPemasukanSelesai();
+    const totalPemasukanSelesai = computeTotalPemasukanSelesai() + computeKasBersih();
     document.getElementById('cfPemasukan').textContent = rupiah(totalPemasukanSelesai);
     document.getElementById('cfPengeluaran').textContent = rupiah(totalPengeluaran);
     const bersih = totalPemasukanSelesai - totalPengeluaran;
@@ -1484,6 +1543,16 @@
         jenis: 'masuk',
         jumlah: o.total,
         searchHay: `${o.pemesan} ${item ? item.nama : ''} ${o.jenis} ${o.keterangan||''}`.toLowerCase()
+      });
+    });
+    state.dirtyCash.filter(d=>d.status==='BERSIH').forEach(d=>{
+      entries.push({
+        tanggal: (d.dibersihkanPada||d.tanggal||'').slice(0,10),
+        seq: 0,
+        keterangan: `Kas Kotor dibersihkan — ${d.keterangan}`,
+        jenis: 'masuk',
+        jumlah: d.nominal,
+        searchHay: `kas kotor ${d.keterangan}`.toLowerCase()
       });
     });
     state.expenses.forEach(e=>{
@@ -2060,7 +2129,7 @@
     document.getElementById('kpiTotalPemesan').textContent = totalPemesan.toLocaleString('id-ID');
 
     const totalPengeluaran = computeTotalPengeluaran();
-    const totalPemasukanSelesai = computeTotalPemasukanSelesai();
+    const totalPemasukanSelesai = computeTotalPemasukanSelesai() + computeKasBersih();
     const saldoAwal = state.config.saldoAwal || 0;
     const saldoKasSaatIni = saldoAwal + totalPemasukanSelesai - totalPengeluaran;
     document.getElementById('dashSaldoAwal').textContent = rupiah(saldoAwal);
@@ -2112,6 +2181,8 @@
     renderCraftLog();
     renderExpenses();
     renderPembukuan();
+    renderStockMoves();
+    renderDirty();
     renderRekap();
     renderRekapTanggal();
     renderArsip();
@@ -2369,6 +2440,77 @@
     await dbDeleteItem(id);
     renderAll();
     toast('Item dihapus.');
+  });
+
+  // ---------- Barang Masuk / Keluar ----------
+  function renderStockMoves(){
+    const tb = document.getElementById('stockMoveRows');
+    tb.innerHTML = state.stockMovements.length ? state.stockMovements.map(m=>{
+      const masuk = m.tipe === 'MASUK';
+      return `<tr><td>${fmtDateTime(m.dibuatPada)}</td><td>${esc(m.itemNama)}</td><td><span class="badge ${masuk?'ok':'bad'}">${masuk?'MASUK':'KELUAR'}</span></td><td class="num">${m.jumlah}</td><td class="num">${m.stokSetelah}</td><td>${esc(m.keterangan)}</td></tr>`;
+    }).join('') : '<tr class="empty-row"><td colspan="6">Belum ada pergerakan stok manual.</td></tr>';
+  }
+  async function recordStockMove(tipe){
+    const itemId = document.getElementById('smItem').value;
+    const jumlah = Math.floor(Number(document.getElementById('smJumlah').value));
+    const ket = document.getElementById('smKet').value.trim();
+    const item = itemById(itemId);
+    if(!item){ toast('Pilih item dulu.'); return; }
+    if(!(jumlah >= 1)){ toast('Jumlah minimal 1.'); return; }
+    if(!ket){ toast('Keterangan wajib diisi.'); return; }
+    if(tipe === 'KELUAR' && jumlah > item.stok){ toast(`Stok ${item.nama} hanya ${item.stok}.`); return; }
+    item.stok += tipe === 'MASUK' ? jumlah : -jumlah;
+    const mv = { id: uid(), itemId, itemNama: item.nama, tipe, jumlah, stokSetelah: item.stok, keterangan: ket, dibuatPada: new Date().toISOString() };
+    state.stockMovements.unshift(mv);
+    await dbUpdateItemStok(itemId, item.stok);
+    const { error } = await sb.from('stock_movements').insert([{ id:mv.id, item_id:itemId, item_nama:mv.itemNama, tipe, jumlah, stok_setelah:mv.stokSetelah, keterangan:ket, dibuat_pada:mv.dibuatPada }]);
+    if(error) console.error('insert stock_movements failed', error);
+    document.getElementById('smKet').value = ''; document.getElementById('smJumlah').value = 1;
+    renderAll();
+    toast(`Barang ${tipe === 'MASUK' ? 'masuk' : 'keluar'} dicatat.`);
+  }
+  document.getElementById('smMasukBtn').addEventListener('click', ()=>{ if(document.getElementById('stockMoveForm').reportValidity()) recordStockMove('MASUK'); });
+  document.getElementById('smKeluarBtn').addEventListener('click', ()=>{ if(document.getElementById('stockMoveForm').reportValidity()) recordStockMove('KELUAR'); });
+
+  // ---------- Arus Kas Kotor ----------
+  function renderDirty(){
+    const kotor = state.dirtyCash.filter(d=>d.status==='KOTOR').reduce((s,d)=>s+d.nominal,0);
+    document.getElementById('dcKotor').textContent = rupiah(kotor);
+    document.getElementById('dcBersih').textContent = rupiah(computeKasBersih());
+    const tb = document.getElementById('dirtyRows');
+    tb.innerHTML = state.dirtyCash.length ? state.dirtyCash.map(d=>{
+      const bersih = d.status === 'BERSIH';
+      return `<tr><td>${fmtDateShort(d.tanggal)}</td><td class="num">${rupiah(d.nominal)}</td><td>${esc(d.keterangan)}</td><td><span class="badge ${bersih?'ok':'mid'}">${bersih?'BERSIH':'KOTOR'}</span></td><td>${bersih ? '' : `<button class="btn sm" data-clean-dirty="${d.id}">Bersihkan</button> <button class="icon-btn" data-del-dirty="${d.id}" title="Hapus">✕</button>`}</td></tr>`;
+    }).join('') : '<tr class="empty-row"><td colspan="5">Belum ada catatan kas kotor.</td></tr>';
+  }
+  document.getElementById('dcTanggal').value = todayISO();
+  document.getElementById('dirtyForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const nominal = Math.floor(Number(document.getElementById('dcNominal').value));
+    const ket = document.getElementById('dcKet').value.trim();
+    if(!(nominal >= 1) || !ket){ toast('Nominal & keterangan wajib diisi.'); return; }
+    const d = { id: uid(), tanggal: document.getElementById('dcTanggal').value || todayISO(), nominal, keterangan: ket, status:'KOTOR', dibersihkanPada:null, dibuatPada:new Date().toISOString() };
+    state.dirtyCash.unshift(d);
+    const { error } = await sb.from('kas_kotor').insert([{ id:d.id, tanggal:d.tanggal, nominal, keterangan:ket, status:'KOTOR', dibuat_pada:d.dibuatPada }]);
+    if(error) console.error('insert kas_kotor failed', error);
+    e.target.reset(); document.getElementById('dcTanggal').value = todayISO();
+    renderAll(); toast('Kas kotor dicatat.');
+  });
+  document.getElementById('dirtyRows').addEventListener('click', async (e)=>{
+    const clean = e.target.closest('[data-clean-dirty]'), del = e.target.closest('[data-del-dirty]');
+    if(clean){
+      const d = state.dirtyCash.find(x=>x.id===clean.dataset.cleanDirty); if(!d) return;
+      if(!confirm(`Pindahkan ${rupiah(d.nominal)} ke Kas Bersih?`)) return;
+      d.status = 'BERSIH'; d.dibersihkanPada = new Date().toISOString();
+      const { error } = await sb.from('kas_kotor').update({ status:'BERSIH', dibersihkan_pada:d.dibersihkanPada }).eq('id', d.id);
+      if(error) console.error('update kas_kotor failed', error);
+      renderAll(); toast('Kas kotor dibersihkan ke Kas Bersih.');
+    } else if(del){
+      if(!confirm('Hapus catatan kas kotor ini?')) return;
+      state.dirtyCash = state.dirtyCash.filter(x=>x.id!==del.dataset.delDirty);
+      await sb.from('kas_kotor').delete().eq('id', del.dataset.delDirty);
+      renderAll(); toast('Catatan dihapus.');
+    }
   });
 
   // ---------- Crafting: bahan cart rows (form resep) ----------

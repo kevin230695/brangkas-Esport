@@ -124,6 +124,34 @@ create table if not exists public.webhook_log (
   dibuat_pada timestamptz not null default now()
 );
 
+-- ---------------------------------------------------------------------
+-- TABEL: stock_movements — riwayat Barang Masuk / Barang Keluar (manual)
+-- ---------------------------------------------------------------------
+create table if not exists public.stock_movements (
+  id           text primary key,
+  item_id      text references public.items(id) on delete set null,
+  item_nama    text not null default '',
+  tipe         text not null default 'MASUK',       -- MASUK / KELUAR
+  jumlah       numeric not null default 0,
+  stok_setelah numeric not null default 0,
+  keterangan   text not null default '',
+  dibuat_pada  timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------
+-- TABEL: kas_kotor — arus kas kotor (dicatat dulu, lalu "dibersihkan"
+-- ke Kas Bersih / Pembukuan)
+-- ---------------------------------------------------------------------
+create table if not exists public.kas_kotor (
+  id               text primary key,
+  tanggal          date not null default current_date,
+  nominal          numeric not null default 0,
+  keterangan       text not null default '',
+  status           text not null default 'KOTOR',   -- KOTOR / BERSIH
+  dibersihkan_pada timestamptz,
+  dibuat_pada      timestamptz not null default now()
+);
+
 -- =====================================================================
 -- ROW LEVEL SECURITY
 -- Aplikasi ini mengakses database langsung dari browser memakai anon
@@ -140,12 +168,14 @@ alter table public.resep        enable row level security;
 alter table public.crafting_log enable row level security;
 alter table public.config       enable row level security;
 alter table public.webhook_log  enable row level security;
+alter table public.stock_movements enable row level security;
+alter table public.kas_kotor    enable row level security;
 
 do $$
 declare
   t text;
 begin
-  foreach t in array array['items','orders','archive','pengeluaran','resep','crafting_log','config','webhook_log']
+  foreach t in array array['items','orders','archive','pengeluaran','resep','crafting_log','config','webhook_log','stock_movements','kas_kotor']
   loop
     execute format('drop policy if exists "allow_all_%1$s" on public.%1$s;', t);
     execute format(
