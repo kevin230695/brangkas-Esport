@@ -190,6 +190,8 @@
   .icon-btn:hover{ color:var(--red); border-color:var(--red); }
   .ledger-num-pos{ color:var(--green); } .ledger-num-neg{ color:var(--red); }
   .ledger-saldo-row td{ background:var(--bg-alt); font-weight:600; }
+  .item-cat-row td{ background:var(--panel-2); border-top:1px solid var(--border-hi); padding:8px 10px !important; font-weight:600; font-size:13px; color:var(--brass-dim); letter-spacing:.02em; }
+  .item-cat-row .item-cat-count{ font-weight:500; color:var(--text-faint); margin-left:6px; }
   #rekapRows tr{ cursor:pointer; }
 
   /* Modal, toast, setup */
@@ -1442,7 +1444,7 @@
     const q = document.getElementById('iSearch').value.trim().toLowerCase(), st = document.getElementById('iStatFilter').value, kt = katSel.value;
     const list = all.filter(i=> (!q || i.nama.toLowerCase().includes(q)) && (!kt || i.kategori===kt) && (!st || itemStatus(i)[1]===st));
     const num = (i, f, v) => `<input class="cell-in n" type="number" min="0" step="1" data-id="${i.id}" data-f="${f}" value="${v}">`;
-    document.getElementById('itemRows').innerHTML = list.length ? list.map(i=>{
+    const rowHtml = i=>{
       const [lbl, cls] = itemStatus(i);
       return `<tr data-row="${i.id}">
         <td><input class="cell-in t" type="text" data-id="${i.id}" data-f="nama" value="${esc(i.nama)}"></td>
@@ -1453,7 +1455,30 @@
         <td>${num(i,'hargaN',i.hargaN)}</td><td>${num(i,'maxN',i.maxN)}</td>
         <td style="white-space:nowrap;text-align:right;"><button class="btn ghost sm" data-stock-item="${i.id}" title="Catat barang masuk / keluar">Stok</button> <button class="icon-btn" data-del-item="${i.id}" title="Hapus item">✕</button></td>
       </tr>`;
-    }).join('') : `<tr class="empty-row"><td colspan="9">${all.length ? 'Tidak ada item yang cocok dengan filter.' : 'Belum ada item. Klik “+ Item baru” untuk menambahkan.'}</td></tr>`;
+    };
+    let html;
+    if(!list.length){
+      html = `<tr class="empty-row"><td colspan="9">${all.length ? 'Tidak ada item yang cocok dengan filter.' : 'Belum ada item. Klik “+ Item baru” untuk menambahkan.'}</td></tr>`;
+    } else {
+      // kelompokkan per kategori, diurutkan alfabetis; item tanpa kategori ditaruh paling akhir
+      const groups = new Map();
+      list.forEach(i=>{
+        const key = (i.kategori || '').trim() || 'Tanpa Kategori';
+        if(!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(i);
+      });
+      const catNames = [...groups.keys()].sort((a,b)=>{
+        if(a === 'Tanpa Kategori') return 1;
+        if(b === 'Tanpa Kategori') return -1;
+        return a.localeCompare(b, 'id');
+      });
+      html = catNames.map(cat=>{
+        const items = groups.get(cat);
+        const header = `<tr class="item-cat-row"><td colspan="9">${esc(cat)}<span class="item-cat-count">(${items.length} item)</span></td></tr>`;
+        return header + items.map(rowHtml).join('');
+      }).join('');
+    }
+    document.getElementById('itemRows').innerHTML = html;
   }
   ['iSearch','iKatFilter','iStatFilter'].forEach(id=> document.getElementById(id).addEventListener('input', renderItems));
 
