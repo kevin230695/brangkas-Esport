@@ -430,6 +430,7 @@
   <button class="tab-btn" data-view="rekap">Rekap Pemesan</button>
   <button class="tab-btn" data-view="rekaptanggal">Rekap Tanggal</button>
   <button class="tab-btn" data-view="arsip">Arsip</button>
+  <button class="tab-btn" data-view="payroll">Penggajian</button>
   <button class="tab-btn" data-view="config">Pengaturan</button>
 </div>
 
@@ -821,6 +822,30 @@
     </div>
   </section>
 
+  <!-- PENGGAJIAN -->
+  <section class="view" id="view-payroll">
+    <div class="section-head"><h2>Peng<em>gajian</em></h2><span class="sub">Slip DRAFT belum memotong kas · BAYAR otomatis tercatat sebagai pengeluaran &ldquo;GAJI&rdquo; di Pembukuan</span></div>
+    <div class="cashflow-grid-4">
+      <div class="kpi-card"><div class="kpi-label">Slip Draft</div><div class="kpi-value" id="pyDraftN">0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total Draft</div><div class="kpi-value" style="color:var(--gold);" id="pyDraftT">Rp0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Slip Dibayar</div><div class="kpi-value" id="pyPaidN">0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total Dibayar</div><div class="kpi-value" style="color:var(--red);" id="pyPaidT">Rp0</div></div>
+    </div>
+    <form class="item-form" id="payrollForm">
+      <div class="field"><label>Nama Karyawan</label><input type="text" id="pyNama" list="pyNamaList" autocomplete="off" required><datalist id="pyNamaList"></datalist></div>
+      <div class="field"><label>Periode</label><input type="month" id="pyPeriode" required></div>
+      <div class="field"><label>Gaji Pokok</label><input type="number" id="pyPokok" min="0" value="0" required></div>
+      <div class="field"><label>Tunjangan</label><input type="number" id="pyTunj" min="0" value="0"></div>
+      <div class="field"><label>Bonus</label><input type="number" id="pyBonus" min="0" value="0"></div>
+      <div class="field"><label>Potongan</label><input type="number" id="pyPot" min="0" value="0"></div>
+      <div class="full"><button type="submit" class="btn">+ Buat Slip Gaji</button></div>
+    </form>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Karyawan</th><th>Periode</th><th class="num">Pokok</th><th class="num">Tunj.+Bonus</th><th class="num">Potongan</th><th class="num">Total</th><th>Status</th><th></th></tr></thead>
+      <tbody id="payrollRows"></tbody>
+    </table></div>
+  </section>
+
   <!-- CONFIG -->
   <section class="view" id="view-config">
     <div class="section-head"><h2>Pengaturan <em>Sistem</em></h2></div>
@@ -1006,7 +1031,7 @@
   "use strict";
 
   let state = { items: [], orders: [], archives: [], expenses: [], recipes: [], craftingLogs: [], config: { targetBulanan: 100000000, batasStok: 20, currency: 'Rp', saldoAwal: 0, webhookPesanan: '', webhookSelesai: '', webhookPengeluaran: '', webhookStok: '' } };
-  state.stockMovements = []; state.dirtyCash = [];
+  state.stockMovements = []; state.dirtyCash = []; state.slips = [];
   let filters = { tanggalDari: '', tanggalSampai: '', pemesan: '', status: '', statusPesanan: '' };
   let ledgerFilters = { tanggalDari: '', tanggalSampai: '', keyword: '' };
 
@@ -1131,6 +1156,10 @@
     const { data: dcRows, error: e9 } = await sb.from('kas_kotor').select('*').order('dibuat_pada', { ascending:false });
     if(e9) throw e9;
     state.dirtyCash = (dcRows||[]).map(rowsToDirty);
+
+    const { data: slipRows, error: e10 } = await sb.from('payroll_slips').select('*').order('dibuat_pada', { ascending:false });
+    if(e10) throw e10;
+    state.slips = slipRows || [];
 
     const { data: cfgRows, error: e3 } = await sb.from('config').select('*');
     if(e3) throw e3;
@@ -1277,6 +1306,7 @@
     await sb.from('crafting_log').delete().neq('id','__none__');
     await sb.from('stock_movements').delete().neq('id','__none__');
     await sb.from('kas_kotor').delete().neq('id','__none__');
+    await sb.from('payroll_slips').delete().neq('id','__none__');
     await sb.from('resep').delete().neq('id','__none__');
     await sb.from('items').delete().neq('id','__none__');
     const seed = DEFAULT_ITEMS.map(i=>({ id:i.id, nama:i.nama, kategori:i.kategori, harga_a:i.hargaA, max_a:i.maxA, harga_n:i.hargaN, max_n:i.maxN, stok:i.stok }));
@@ -1301,6 +1331,7 @@
       .on('postgres_changes', { event:'*', schema:'public', table:'crafting_log' }, async ()=>{ await reloadAndRender(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'stock_movements' }, async ()=>{ await reloadAndRender(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'kas_kotor' }, async ()=>{ await reloadAndRender(); })
+      .on('postgres_changes', { event:'*', schema:'public', table:'payroll_slips' }, async ()=>{ await reloadAndRender(); })
       .subscribe();
   }
   async function reloadAndRender(){
@@ -2183,6 +2214,7 @@
     renderPembukuan();
     renderStockMoves();
     renderDirty();
+    renderPayroll();
     renderRekap();
     renderRekapTanggal();
     renderArsip();
@@ -2510,6 +2542,58 @@
       state.dirtyCash = state.dirtyCash.filter(x=>x.id!==del.dataset.delDirty);
       await sb.from('kas_kotor').delete().eq('id', del.dataset.delDirty);
       renderAll(); toast('Catatan dihapus.');
+    }
+  });
+
+  // ---------- Penggajian ----------
+  const N = v => Math.max(0, Math.floor(Number(v)||0));
+  const dbIns = async (t, row) => { const { error } = await sb.from(t).insert([row]); if(error){ console.error(t, error); toast('Gagal menyimpan: '+error.message); } };
+  const dbUpd = async (t, id, f) => { const { error } = await sb.from(t).update(f).eq('id', id); if(error) console.error(t, error); };
+
+  function renderPayroll(){
+    const sl = state.slips, sum = st => sl.filter(x=>x.status===st).reduce((a,x)=>a+Number(x.total),0), cnt = st => sl.filter(x=>x.status===st).length;
+    document.getElementById('pyNamaList').innerHTML = [...new Set(sl.map(x=>x.member_nama))].map(n=>`<option value="${esc(n)}">`).join('');
+    document.getElementById('pyDraftN').textContent = cnt('DRAFT'); document.getElementById('pyDraftT').textContent = rupiah(sum('DRAFT'));
+    document.getElementById('pyPaidN').textContent = cnt('DIBAYAR'); document.getElementById('pyPaidT').textContent = rupiah(sum('DIBAYAR'));
+    document.getElementById('payrollRows').innerHTML = sl.map(x=>{
+      const cls = x.status==='DIBAYAR'?'ok':(x.status==='BATAL'?'bad':'mid');
+      return `<tr><td>${esc(x.member_nama)}</td><td>${x.periode}</td><td class="num">${rupiah(x.gaji_pokok)}</td><td class="num">${rupiah(Number(x.tunjangan)+Number(x.bonus))}</td><td class="num">${rupiah(x.potongan)}</td><td class="num"><b>${rupiah(x.total)}</b></td><td><span class="badge ${cls}">${x.status}</span></td><td><button class="btn ghost sm" data-slip-view="${x.id}">Lihat</button>${x.status==='DRAFT'?` <button class="btn sm" data-slip-pay="${x.id}">Bayar</button> <button class="icon-btn" data-slip-cancel="${x.id}" title="Batalkan">✕</button>`:''}</td></tr>`;
+    }).join('') || '<tr class="empty-row"><td colspan="8">Belum ada slip gaji.</td></tr>';
+  }
+
+  document.getElementById('pyPeriode').value = todayISO().slice(0,7);
+  document.getElementById('payrollForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const nama = document.getElementById('pyNama').value.trim(); if(!nama){ toast('Isi nama karyawan.'); return; }
+    const g = id => N(document.getElementById(id).value);
+    const row = { id:uid(), member_nama:nama, periode:document.getElementById('pyPeriode').value, gaji_pokok:g('pyPokok'), tunjangan:g('pyTunj'), bonus:g('pyBonus'), potongan:g('pyPot'), status:'DRAFT', dibuat_pada:new Date().toISOString() };
+    row.total = row.gaji_pokok + row.tunjangan + row.bonus - row.potongan;
+    if(row.total < 0){ toast('Potongan melebihi total gaji.'); return; }
+    state.slips.unshift(row); await dbIns('payroll_slips', row); e.target.reset(); document.getElementById('pyPeriode').value = todayISO().slice(0,7); renderAll(); toast('Slip gaji dibuat (DRAFT).');
+  });
+  function printSlip(x){
+    const w = window.open('', '_blank'); if(!w){ toast('Izinkan pop-up untuk mencetak slip.'); return; }
+    const r = (l,v) => `<tr><td>${l}</td><td style="text-align:right">${rupiah(v)}</td></tr>`;
+    w.document.write(`<html><head><title>Slip Gaji</title><style>body{font-family:sans-serif;max-width:480px;margin:30px auto}table{width:100%;border-collapse:collapse}td{padding:6px 0;border-bottom:1px solid #ddd}</style></head><body><h2>BRANGKAS ESPORT — SLIP GAJI</h2><p>${esc(x.member_nama)}<br>Periode: ${x.periode} · Status: ${x.status}</p><table>${r('Gaji Pokok',x.gaji_pokok)}${r('Tunjangan',x.tunjangan)}${r('Bonus',x.bonus)}${r('Potongan',-x.potongan)}<tr><td><b>TOTAL DITERIMA</b></td><td style="text-align:right"><b>${rupiah(x.total)}</b></td></tr></table><p><button onclick="print()">Cetak</button></p></body></html>`);
+    w.document.close();
+  }
+  document.getElementById('payrollRows').addEventListener('click', async e=>{
+    const v = e.target.closest('[data-slip-view]'), pay = e.target.closest('[data-slip-pay]'), can = e.target.closest('[data-slip-cancel]');
+    const find = id => state.slips.find(x=>x.id===id);
+    if(v) return printSlip(find(v.dataset.slipView));
+    if(pay){
+      const x = find(pay.dataset.slipPay); if(!x || x.status!=='DRAFT') return;
+      const saldo = (state.config.saldoAwal||0) + computeTotalPemasukanSelesai() + computeKasBersih() - computeTotalPengeluaran();
+      if(Number(x.total) > saldo){ toast('Saldo kas tidak cukup untuk membayar gaji.'); return; }
+      if(!confirm(`Bayar gaji ${x.member_nama} sebesar ${rupiah(x.total)}? Kas akan berkurang.`)) return;
+      const ex = { id:uid(), tanggal:todayISO(), itemId:null, itemNama:'GAJI', jumlah:1, hargaSatuan:Number(x.total), total:Number(x.total), keterangan:`Gaji ${x.member_nama} — ${x.periode}` };
+      state.expenses.push(ex); await dbInsertExpense(ex);
+      x.status = 'DIBAYAR'; x.dibayar_pada = new Date().toISOString(); await dbUpd('payroll_slips', x.id, { status:x.status, dibayar_pada:x.dibayar_pada });
+      renderAll(); toast('Gaji dibayar & tercatat di Pembukuan.');
+    }
+    if(can){
+      const x = find(can.dataset.slipCancel); if(!x || !confirm('Batalkan slip ini?')) return;
+      x.status = 'BATAL'; await dbUpd('payroll_slips', x.id, { status:'BATAL' }); renderAll();
     }
   });
 

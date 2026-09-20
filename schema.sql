@@ -152,6 +152,17 @@ create table if not exists public.kas_kotor (
   dibuat_pada      timestamptz not null default now()
 );
 
+-- ---------------------------------------------------------------------
+-- TABEL: payroll_slips — slip gaji (DRAFT / DIBAYAR / BATAL)
+create table if not exists public.payroll_slips (
+  id text primary key, member_nama text not null default '',
+  periode text not null default '',
+  gaji_pokok numeric not null default 0, tunjangan numeric not null default 0,
+  bonus numeric not null default 0, potongan numeric not null default 0,
+  total numeric not null default 0, status text not null default 'DRAFT',
+  dibayar_pada timestamptz, dibuat_pada timestamptz not null default now()
+);
+
 -- =====================================================================
 -- ROW LEVEL SECURITY
 -- Aplikasi ini mengakses database langsung dari browser memakai anon
@@ -170,12 +181,13 @@ alter table public.config       enable row level security;
 alter table public.webhook_log  enable row level security;
 alter table public.stock_movements enable row level security;
 alter table public.kas_kotor    enable row level security;
+alter table public.payroll_slips enable row level security;
 
 do $$
 declare
   t text;
 begin
-  foreach t in array array['items','orders','archive','pengeluaran','resep','crafting_log','config','webhook_log','stock_movements','kas_kotor']
+  foreach t in array array['items','orders','archive','pengeluaran','resep','crafting_log','config','webhook_log','stock_movements','kas_kotor','payroll_slips']
   loop
     execute format('drop policy if exists "allow_all_%1$s" on public.%1$s;', t);
     execute format(
@@ -189,3 +201,10 @@ end $$;
 -- SELESAI. Data item default akan otomatis diisi oleh aplikasi saat
 -- pertama kali dibuka jika tabel "items" masih kosong.
 -- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- OPSIONAL (hanya jika sebelumnya sudah menjalankan versi lama schema
+-- ini): hapus tabel fitur yang sudah dihilangkan. Hapus tanda "--" di
+-- bawah lalu Run kalau ingin membersihkannya.
+-- ---------------------------------------------------------------------
+-- drop table if exists public.absensi, public.self_services, public.members;
