@@ -143,6 +143,11 @@
   .recipe-hasil{ font-size:13px; color:var(--text-dim); margin:-2px 0 10px; padding-bottom:10px; border-bottom:1px solid var(--border); } .recipe-hasil b{ color:var(--text); }
   .recipe-craft-controls{ display:flex; gap:8px; margin-top:12px; } .recipe-craft-controls input{ width:80px; text-align:right; }
   .recipe-card-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .recipe-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px; } .recipe-head h3{ margin:0; padding:0; border:0; }
+  .recipe-grid{ align-items:start; }
+  .recipe-max{ font-size:12.5px; color:var(--text-faint); margin-top:8px; }
+  .recipe-craft-controls .btn:not(.ghost):not(.sm){ flex:1; }
+  .recipe-craft-controls [data-craft-recipe]{ flex:1; }
   .recipe-empty{ padding:28px; text-align:center; color:var(--text-faint); }
 
   /* Tables */
@@ -442,47 +447,53 @@
   <!-- CRAFTING -->
   <section class="view" id="view-crafting">
     <div class="section-head">
-      <h2>Sistem <em>Crafting</em></h2>
+      <h2>Crafting</h2>
       <span class="sub" id="recipeCount">0 resep</span>
     </div>
-    <div class="stamp" style="color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px; margin:-10px 0 22px;">
-      Buat resep dari item yang sudah ada di Master Item, lalu craft — stok bahan otomatis berkurang dan stok item hasil otomatis bertambah.
+    <div class="seg" id="craftTabs">
+      <button type="button" class="seg-btn active" data-cpane="recipes">Resep &amp; Craft</button>
+      <button type="button" class="seg-btn" data-cpane="log">Riwayat Crafting</button>
     </div>
 
-    <form class="item-form" id="recipeForm" style="grid-template-columns:2fr 2fr 1fr;">
-      <input type="hidden" id="recipeEditingId" value="">
-      <div class="field"><label>Nama Resep</label><input type="text" id="rNama" placeholder="Misal: Rakit Peluru 9mm" required></div>
-      <div class="field"><label>Item Hasil</label><select id="rResultItem" class="recipe-result-select" required></select></div>
-      <div class="field"><label>Jumlah Hasil / Craft</label><input type="number" id="rResultJumlah" min="1" value="1" required></div>
+    <div id="craftPaneRecipes">
+      <p class="stamp" style="margin:0 0 12px;">Pilih resep, tentukan jumlah craft, lalu tekan Craft. Stok bahan otomatis berkurang dan stok item hasil otomatis bertambah.</p>
+      <div class="filter-bar" style="grid-template-columns:2fr 1fr auto;">
+        <div class="field"><label>Cari resep</label><input type="search" id="rSearch" placeholder="Ketik nama resep atau item..."></div>
+        <div class="field"><label>Tampilkan</label><select id="rFilter"><option value="">Semua resep</option><option value="ready">Siap craft</option><option value="short">Bahan kurang</option></select></div>
+        <div class="field"><label>&nbsp;</label><button type="button" class="btn" id="rNewBtn">+ Resep baru</button></div>
+      </div>
 
-      <div class="full-block">
-        <label style="display:block; margin:6px 0 8px;">Bahan yang Dibutuhkan (per 1x craft)</label>
-        <div class="cart-wrap">
-          <div class="bahan-cart-head-row"><span>Bahan</span><span>Jumlah</span><span></span></div>
-          <div id="recipeBahanRows"></div>
+      <form class="item-form" id="recipeForm" style="grid-template-columns:2fr 2fr 1fr;" hidden>
+        <input type="hidden" id="recipeEditingId" value="">
+        <div class="full" style="text-align:left;"><strong id="recipeFormTitle">Resep baru</strong></div>
+        <div class="field"><label>Nama resep</label><input type="text" id="rNama" placeholder="Misal: Rakit Peluru 9mm" required></div>
+        <div class="field"><label>Item hasil</label><select id="rResultItem" class="recipe-result-select" required></select></div>
+        <div class="field"><label>Jumlah hasil / craft</label><input type="number" id="rResultJumlah" min="1" value="1" required></div>
+        <div class="full-block">
+          <label style="display:block; margin:6px 0 8px;">Bahan yang dibutuhkan (untuk 1x craft)</label>
+          <div class="cart-wrap">
+            <div class="bahan-cart-head-row"><span>Bahan</span><span>Jumlah</span><span></span></div>
+            <div id="recipeBahanRows"></div>
+          </div>
+          <button type="button" class="btn ghost sm" id="recipeAddBahanBtn" style="margin-top:10px;">+ Tambah bahan</button>
         </div>
-        <button type="button" class="btn ghost sm" id="recipeAddBahanBtn" style="margin-top:10px;">+ Tambah Bahan</button>
-      </div>
+        <div class="full">
+          <button type="button" class="btn ghost" id="recipeCancelEditBtn">Batal</button>
+          <button type="submit" class="btn" id="recipeSubmitBtn">Simpan resep</button>
+        </div>
+      </form>
 
-      <div class="full">
-        <button type="button" class="btn ghost" id="recipeCancelEditBtn" style="display:none;">Batal Edit</button>
-        <button type="submit" class="btn" id="recipeSubmitBtn">+ Simpan Resep</button>
-      </div>
-    </form>
-
-    <div class="recipe-grid" id="recipeList"></div>
-
-    <div class="section-head" style="margin-top:34px;">
-      <h2>Riwayat <em>Crafting</em></h2>
-      <span class="sub">Histori setiap kali item berhasil di-craft, termasuk bahan yang terpakai</span>
+      <div class="recipe-grid" id="recipeList"></div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>Waktu</th><th>Resep</th><th>Hasil</th><th class="num">Jumlah Craft</th><th class="num">Total Hasil</th><th>Bahan Terpakai</th>
-        </tr></thead>
-        <tbody id="craftLogRows"></tbody>
-      </table>
+
+    <div id="craftPaneLog" hidden>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Waktu</th><th>Resep</th><th>Hasil</th><th class="num">Jumlah craft</th><th class="num">Total hasil</th><th>Bahan terpakai</th></tr></thead>
+          <tbody id="craftLogRows"></tbody>
+        </table>
+      </div>
+      <div style="margin:-6px 0 8px;"><button type="button" class="btn ghost sm" id="craftMoreBtn" hidden></button></div>
     </div>
   </section>
 
@@ -2582,8 +2593,9 @@
     document.getElementById('recipeEditingId').value = '';
     document.getElementById('recipeBahanRows').innerHTML = '';
     addRecipeBahanRow();
-    document.getElementById('recipeSubmitBtn').textContent = '+ Simpan Resep';
-    document.getElementById('recipeCancelEditBtn').style.display = 'none';
+    document.getElementById('recipeSubmitBtn').textContent = 'Simpan resep';
+    document.getElementById('recipeFormTitle').textContent = 'Resep baru';
+    document.getElementById('recipeForm').hidden = true;
   }
   document.getElementById('recipeAddBahanBtn').addEventListener('click', ()=>addRecipeBahanRow());
   document.getElementById('recipeBahanRows').addEventListener('click', (e)=>{
@@ -2596,6 +2608,17 @@
   });
   addRecipeBahanRow(); // baris bahan kosong pertama saat halaman dimuat
 
+  function showRecipeForm(){
+    const f = document.getElementById('recipeForm'); f.hidden = false;
+    setCraftPane('recipes'); f.scrollIntoView({ behavior:'smooth', block:'center' }); document.getElementById('rNama').focus();
+  }
+  document.getElementById('rNewBtn').addEventListener('click', ()=>{ resetRecipeForm(); showRecipeForm(); });
+  function setCraftPane(name){
+    document.querySelectorAll('#craftTabs .seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.cpane===name));
+    document.getElementById('craftPaneRecipes').hidden = name !== 'recipes';
+    document.getElementById('craftPaneLog').hidden = name !== 'log';
+  }
+  document.getElementById('craftTabs').addEventListener('click', e=>{ const b = e.target.closest('.seg-btn'); if(b) setCraftPane(b.dataset.cpane); });
   function startEditRecipe(id){
     const r = state.recipes.find(x=>x.id===id);
     if(!r) return;
@@ -2606,9 +2629,9 @@
     document.getElementById('recipeBahanRows').innerHTML = '';
     const bahanList = (r.bahan && r.bahan.length) ? r.bahan : [{}];
     bahanList.forEach(b=> addRecipeBahanRow(b.itemId, b.jumlah));
-    document.getElementById('recipeSubmitBtn').textContent = 'Simpan Perubahan';
-    document.getElementById('recipeCancelEditBtn').style.display = 'inline-block';
-    document.getElementById('view-crafting').scrollIntoView({ behavior:'smooth', block:'start' });
+    document.getElementById('recipeSubmitBtn').textContent = 'Simpan perubahan';
+    document.getElementById('recipeFormTitle').textContent = 'Ubah resep: ' + r.nama;
+    showRecipeForm();
   }
   document.getElementById('recipeCancelEditBtn').addEventListener('click', ()=> resetRecipeForm());
 
@@ -2626,6 +2649,8 @@
     })).filter(b=> b.itemId && b.jumlah > 0);
 
     if(!bahan.length){ toast('Tambahkan minimal satu bahan dengan jumlah yang valid.'); return; }
+    const merged = {}; bahan.forEach(b=>{ merged[b.itemId] = (merged[b.itemId]||0) + b.jumlah; });
+    bahan.splice(0, bahan.length, ...Object.keys(merged).map(id=>({ itemId:id, jumlah:merged[id] })));
     if(bahan.some(b=> b.itemId === resultItemId)){ toast('Item hasil tidak boleh menjadi bahan resep itu sendiri.'); return; }
 
     if(editingId){
@@ -2646,85 +2671,104 @@
   });
 
   // ---------- Crafting: render kartu resep & riwayat ----------
+  function recipeMaxCraft(r){
+    const list = r.bahan || [];
+    if(!list.length) return 0;
+    return Math.min(...list.map(b=>{ const it = itemById(b.itemId); return it ? Math.floor(it.stok / b.jumlah) : 0; }));
+  }
   function recalcRecipeCard(card){
-    const batchInput = card.querySelector('.craft-jumlah-input');
-    const batch = Math.max(1, Number(batchInput.value) || 1);
+    const batch = Math.max(1, Math.floor(Number(card.querySelector('.craft-jumlah-input').value) || 1));
+    const r = state.recipes.find(x=>x.id===card.dataset.recipeId); if(!r) return;
     let allOk = true;
-    const bahanRows = card.querySelectorAll('.bahan-row');
-    bahanRows.forEach(row=>{
-      const perUnit = Number(row.dataset.perUnit) || 0;
-      const itemId = row.dataset.itemId;
-      const item = itemById(itemId);
-      const need = perUnit * batch;
-      const stok = item ? item.stok : 0;
+    card.querySelectorAll('.bahan-row').forEach(row=>{
+      const item = itemById(row.dataset.itemId), need = (Number(row.dataset.perUnit) || 0) * batch, stok = item ? item.stok : 0;
       const ok = !!item && stok >= need;
       if(!ok) allOk = false;
-      const needEl = row.querySelector('.bahan-need');
-      if(needEl) needEl.textContent = need;
-      const stokEl = row.querySelector('.bahan-stok');
-      if(stokEl) stokEl.textContent = stok;
+      row.querySelector('.bahan-need').textContent = need;
+      row.querySelector('.bahan-stok').textContent = stok;
       const badge = row.querySelector('.bahan-badge');
-      if(badge){ badge.textContent = ok ? 'CUKUP' : 'KURANG'; badge.className = 'badge bahan-badge ' + (ok?'ok':'bad'); }
+      badge.textContent = ok ? 'Cukup' : `Kurang ${need - stok}`; badge.className = 'badge bahan-badge ' + (ok?'ok':'bad');
     });
-    const craftBtn = card.querySelector('[data-craft-recipe]');
-    if(craftBtn) craftBtn.disabled = !allOk || !bahanRows.length;
+    const max = recipeMaxCraft(r), res = itemById(r.resultItemId);
+    const st = card.querySelector('.recipe-status');
+    st.textContent = max >= 1 ? 'Siap craft' : 'Bahan kurang'; st.className = 'badge recipe-status ' + (max >= 1 ? 'ok' : 'bad');
+    card.querySelector('.recipe-max').textContent = max >= 1 ? `Bisa dibuat sampai ${max}x dengan stok sekarang.` : 'Stok bahan belum cukup untuk 1x craft.';
+    const btn = card.querySelector('[data-craft-recipe]');
+    btn.disabled = !allOk || !r.bahan.length || !res;
+    btn.textContent = res ? `Craft → +${r.resultJumlah * batch} ${res.nama}` : 'Item hasil dihapus';
   }
 
   function renderRecipes(){
     const wrap = document.getElementById('recipeList');
     document.getElementById('recipeCount').textContent = state.recipes.length + ' resep';
-    if(!state.recipes.length){
-      wrap.innerHTML = '<div class="recipe-empty">Belum ada resep crafting. Tambahkan resep lewat form di atas.</div>';
+    const ae = document.activeElement;
+    if(ae && ae.classList && ae.classList.contains('craft-jumlah-input')){ document.querySelectorAll('.recipe-card').forEach(recalcRecipeCard); return; }
+    const keep = {}; wrap.querySelectorAll('.craft-jumlah-input').forEach(i=>{ keep[i.dataset.craftJumlah] = i.value; });
+
+    const q = document.getElementById('rSearch').value.trim().toLowerCase(), flt = document.getElementById('rFilter').value;
+    const list = state.recipes.filter(r=>{
+      const res = itemById(r.resultItemId), ready = recipeMaxCraft(r) >= 1;
+      const hay = (r.nama + ' ' + (res ? res.nama : '')).toLowerCase();
+      return (!q || hay.includes(q)) && (flt === '' || (flt === 'ready' ? ready : !ready));
+    });
+    if(!list.length){
+      wrap.innerHTML = state.recipes.length
+        ? '<div class="recipe-empty">Tidak ada resep yang cocok dengan pencarian atau filter.</div>'
+        : '<div class="recipe-empty">Belum ada resep crafting.<br>Klik “+ Resep baru” untuk membuat resep pertama Anda.</div>';
       return;
     }
-    wrap.innerHTML = state.recipes.map(r=>{
-      const resultItem = itemById(r.resultItemId);
+    wrap.innerHTML = list.map(r=>{
+      const res = itemById(r.resultItemId);
       const bahanHtml = (r.bahan||[]).map(b=>{
         const item = itemById(b.itemId);
-        const nama = item ? item.nama : '(item dihapus)';
-        const stok = item ? item.stok : 0;
-        const ok = !!item && stok >= b.jumlah;
         return `<div class="mini-row bahan-row" data-item-id="${b.itemId}" data-per-unit="${b.jumlah}">
-          <span class="name">${nama}</span>
-          <span class="val"><span class="bahan-need">${b.jumlah}</span> <span style="color:var(--text-faint);">/ stok <span class="bahan-stok">${stok}</span></span> <span class="badge bahan-badge ${ok?'ok':'bad'}">${ok?'CUKUP':'KURANG'}</span></span>
+          <span class="name">${item ? esc(item.nama) : '(item dihapus)'}</span>
+          <span class="val"><span class="bahan-need">${b.jumlah}</span> <span style="color:var(--text-faint);font-weight:400;">/ stok <span class="bahan-stok">${item ? item.stok : 0}</span></span> <span class="badge bahan-badge"></span></span>
         </div>`;
       }).join('') || '<div class="recipe-empty" style="padding:14px;">Belum ada bahan.</div>';
       return `<div class="panel recipe-card" data-recipe-id="${r.id}">
-        <h3>${r.nama}</h3>
-        <div class="recipe-hasil">Hasil: <b>${resultItem ? resultItem.nama : '(item dihapus)'}</b> × ${r.resultJumlah} / craft</div>
+        <div class="recipe-head"><h3>${esc(r.nama)}</h3><span class="badge recipe-status"></span></div>
+        <div class="recipe-hasil">Hasil: <b>${res ? esc(res.nama) : '(item dihapus)'}</b> × ${r.resultJumlah} per craft${res ? ` · stok sekarang ${res.stok}` : ''}</div>
         ${bahanHtml}
+        <div class="recipe-max"></div>
         <div class="recipe-craft-controls">
-          <input type="number" class="craft-jumlah-input" min="1" value="1" data-craft-jumlah="${r.id}">
-          <button type="button" class="btn sm" data-craft-recipe="${r.id}">Craft Sekarang</button>
+          <input type="number" class="craft-jumlah-input" min="1" step="1" value="${keep[r.id] || 1}" data-craft-jumlah="${r.id}" title="Jumlah craft">
+          <button type="button" class="btn ghost sm" data-craft-max="${r.id}" title="Isi dengan jumlah maksimal">Maks</button>
+          <button type="button" class="btn" data-craft-recipe="${r.id}"></button>
         </div>
         <div class="recipe-card-actions">
-          <button type="button" class="btn ghost sm" data-edit-recipe="${r.id}">Edit</button>
+          <button type="button" class="btn ghost sm" data-edit-recipe="${r.id}">Ubah resep</button>
           <button type="button" class="icon-btn" data-del-recipe="${r.id}" title="Hapus resep">✕</button>
         </div>
       </div>`;
     }).join('');
-    document.querySelectorAll('.recipe-card').forEach(card=> recalcRecipeCard(card));
+    document.querySelectorAll('.recipe-card').forEach(recalcRecipeCard);
   }
+  ['rSearch','rFilter'].forEach(id=> document.getElementById(id).addEventListener('input', renderRecipes));
 
+  let craftShowAll = false;
   function renderCraftLog(){
-    const tbody = document.getElementById('craftLogRows');
+    const tbody = document.getElementById('craftLogRows'), btn = document.getElementById('craftMoreBtn');
     if(!state.craftingLogs.length){
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Belum ada riwayat crafting.</td></tr>';
-      return;
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Belum ada riwayat crafting.</td></tr>'; btn.hidden = true; return;
     }
-    const sorted = state.craftingLogs.slice().sort((a,b)=> (b.dibuatPada||'').localeCompare(a.dibuatPada||''));
-    tbody.innerHTML = sorted.map(l=>{
-      const bahanText = (l.bahanTerpakai||[]).map(b=>`${b.nama} ×${b.jumlah}`).join(', ');
+    const sorted = state.craftingLogs.slice().sort((a,b)=> (b.dibuatPada||'').localeCompare(a.dibuatPada||'')), LIMIT = 10;
+    const shown = craftShowAll ? sorted : sorted.slice(0, LIMIT);
+    tbody.innerHTML = shown.map(l=>{
+      const bahanText = (l.bahanTerpakai||[]).map(b=>`${esc(b.nama)} ×${b.jumlah}`).join(', ');
       return `<tr>
-        <td>${fmtDateTime(l.dibuatPada)}</td>
-        <td>${l.namaResep}</td>
-        <td>${l.namaHasil}</td>
+        <td style="white-space:nowrap">${fmtDateTime(l.dibuatPada)}</td>
+        <td>${esc(l.namaResep)}</td>
+        <td>${esc(l.namaHasil)}</td>
         <td class="num">${l.jumlahCraft}</td>
         <td class="num">${l.hasilJumlah}</td>
         <td>${bahanText || '-'}</td>
       </tr>`;
     }).join('');
+    btn.hidden = sorted.length <= LIMIT;
+    btn.textContent = craftShowAll ? 'Tampilkan lebih sedikit' : `Tampilkan semua (${sorted.length} catatan)`;
   }
+  document.getElementById('craftMoreBtn').addEventListener('click', ()=>{ craftShowAll = !craftShowAll; renderCraftLog(); });
 
   async function craftRecipe(recipeId, batch){
     const recipe = state.recipes.find(r=>r.id===recipeId);
@@ -2778,9 +2822,15 @@
     const craftBtn = e.target.closest('[data-craft-recipe]');
     if(craftBtn){
       const card = craftBtn.closest('.recipe-card');
-      const batch = Math.max(1, Number(card.querySelector('.craft-jumlah-input').value) || 1);
+      const batch = Math.max(1, Math.floor(Number(card.querySelector('.craft-jumlah-input').value) || 1));
       await craftRecipe(craftBtn.dataset.craftRecipe, batch);
       return;
+    }
+    const maxBtn = e.target.closest('[data-craft-max]');
+    if(maxBtn){
+      const r = state.recipes.find(x=>x.id===maxBtn.dataset.craftMax), card = maxBtn.closest('.recipe-card');
+      card.querySelector('.craft-jumlah-input').value = Math.max(1, r ? recipeMaxCraft(r) : 1);
+      recalcRecipeCard(card); return;
     }
     const editBtn = e.target.closest('[data-edit-recipe]');
     if(editBtn){ startEditRecipe(editBtn.dataset.editRecipe); return; }
