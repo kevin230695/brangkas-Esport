@@ -372,10 +372,11 @@
     </form>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Waktu</th><th>Item</th><th>Jenis</th><th class="num">Jumlah</th><th class="num">Stok Setelah</th><th>Keterangan</th></tr></thead>
+        <thead><tr><th>Waktu</th><th>Jenis</th><th>Barang</th><th>Keterangan</th></tr></thead>
         <tbody id="stockMoveRows"></tbody>
       </table>
     </div>
+    <div style="margin:-6px 0 8px;"><button type="button" class="btn ghost sm" id="smMoreBtn" hidden></button></div>
 
     <div class="section-head" style="margin-top:34px;">
       <h2>Master <em>Item</em> &amp; Harga</h2>
@@ -2275,13 +2276,26 @@
   });
 
   // ---------- Barang Masuk / Keluar ----------
+  let smShowAll = false;
   function renderStockMoves(){
-    const tb = document.getElementById('stockMoveRows');
-    tb.innerHTML = state.stockMovements.length ? state.stockMovements.map(m=>{
-      const masuk = m.tipe === 'MASUK';
-      return `<tr><td>${fmtDateTime(m.dibuatPada)}</td><td>${esc(m.itemNama)}</td><td><span class="badge ${masuk?'ok':'bad'}">${masuk?'MASUK':'KELUAR'}</span></td><td class="num">${m.jumlah}</td><td class="num">${m.stokSetelah}</td><td>${esc(m.keterangan) || '-'}</td></tr>`;
-    }).join('') : '<tr class="empty-row"><td colspan="6">Belum ada pergerakan stok manual.</td></tr>';
+    // satu input (beberapa barang sekaligus) digabung jadi satu baris riwayat
+    const groups = [];
+    state.stockMovements.forEach(m=>{
+      const g = groups[groups.length-1];
+      if(g && g.dibuatPada === m.dibuatPada && g.tipe === m.tipe && g.keterangan === m.keterangan) g.items.push(m);
+      else groups.push({ dibuatPada:m.dibuatPada, tipe:m.tipe, keterangan:m.keterangan, items:[m] });
+    });
+    const LIMIT = 8, shown = smShowAll ? groups : groups.slice(0, LIMIT);
+    document.getElementById('stockMoveRows').innerHTML = shown.length ? shown.map(g=>{
+      const masuk = g.tipe === 'MASUK';
+      const list = g.items.slice().reverse().map(m=>`${esc(m.itemNama)} <b>×${m.jumlah}</b>`).join(', ');
+      return `<tr><td style="white-space:nowrap">${fmtDateTime(g.dibuatPada)}</td><td><span class="badge ${masuk?'ok':'bad'}">${masuk?'MASUK':'KELUAR'}</span></td><td>${list}</td><td>${esc(g.keterangan) || '-'}</td></tr>`;
+    }).join('') : '<tr class="empty-row"><td colspan="4">Belum ada pergerakan stok manual.</td></tr>';
+    const btn = document.getElementById('smMoreBtn');
+    btn.hidden = groups.length <= LIMIT;
+    btn.textContent = smShowAll ? 'Tampilkan lebih sedikit' : `Tampilkan semua (${groups.length} catatan)`;
   }
+  document.getElementById('smMoreBtn').addEventListener('click', ()=>{ smShowAll = !smShowAll; renderStockMoves(); });
   function addSmRow(){
     const row = document.createElement('div');
     row.className = 'sm-row';
