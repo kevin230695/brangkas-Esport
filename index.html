@@ -358,26 +358,6 @@
   <!-- ITEM & STOK -->
   <section class="view" id="view-item">
     <div class="section-head">
-      <h2>Barang <em>Masuk &amp; Keluar</em></h2>
-      <span class="sub">Ubah stok manual — keterangan wajib diisi dan tiap pergerakan tercatat di riwayat</span>
-    </div>
-    <form class="item-form" id="stockMoveForm" style="grid-template-columns:2fr 1fr 3fr;">
-      <div class="field"><label>Item</label><select id="smItem" class="sm-item" required></select></div>
-      <div class="field"><label>Jumlah</label><input type="number" id="smJumlah" min="1" step="1" value="1" required></div>
-      <div class="field"><label>Keterangan (wajib)</label><input type="text" id="smKet" placeholder="Contoh: Barang datang dari supplier / rusak / hilang" required></div>
-      <div class="full">
-        <button type="button" class="btn good" id="smMasukBtn">+ Barang Masuk</button>
-        <button type="button" class="btn danger" id="smKeluarBtn">− Barang Keluar</button>
-      </div>
-    </form>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Waktu</th><th>Item</th><th>Jenis</th><th class="num">Jumlah</th><th class="num">Stok Setelah</th><th>Keterangan</th></tr></thead>
-        <tbody id="stockMoveRows"></tbody>
-      </table>
-    </div>
-
-    <div class="section-head" style="margin-top:34px;">
       <h2>Master <em>Item</em> &amp; Harga</h2>
       <span class="sub" id="itemCount">0 item</span>
     </div>
@@ -403,6 +383,25 @@
       </table>
     </div>
 
+    <div class="section-head" style="margin-top:34px;">
+      <h2>Barang <em>Masuk &amp; Keluar</em></h2>
+      <span class="sub">Ubah stok manual — keterangan wajib diisi dan tiap pergerakan tercatat di riwayat</span>
+    </div>
+    <form class="item-form" id="stockMoveForm" style="grid-template-columns:2fr 1fr 3fr;">
+      <div class="field"><label>Item</label><select id="smItem" class="sm-item" required></select></div>
+      <div class="field"><label>Jumlah</label><input type="number" id="smJumlah" min="1" step="1" value="1" required></div>
+      <div class="field"><label>Keterangan (wajib)</label><input type="text" id="smKet" placeholder="Contoh: Barang datang dari supplier / rusak / hilang" required></div>
+      <div class="full">
+        <button type="button" class="btn good" id="smMasukBtn">+ Barang Masuk</button>
+        <button type="button" class="btn danger" id="smKeluarBtn">− Barang Keluar</button>
+      </div>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Waktu</th><th>Item</th><th>Jenis</th><th class="num">Jumlah</th><th class="num">Stok Setelah</th><th>Keterangan</th></tr></thead>
+        <tbody id="stockMoveRows"></tbody>
+      </table>
+    </div>
   </section>
 
   <!-- CRAFTING -->
@@ -823,12 +822,6 @@
 (function(){
   "use strict";
 
-  // ===== KONEKSI DATABASE =====
-  // Isi dua baris ini sekali saja. Kalau keduanya terisi, semua pengguna
-  // langsung tersambung tanpa perlu memasukkan Project URL & Anon Key.
-  const SUPABASE_URL = '';       // contoh: 'https://xxxxx.supabase.co'
-  const SUPABASE_ANON_KEY = '';  // contoh: 'eyJhbGciOi...'
-
   let state = { items: [], orders: [], archives: [], expenses: [], recipes: [], craftingLogs: [], config: { targetBulanan: 100000000, batasStok: 20, currency: 'Rp', saldoAwal: 0, webhookPesanan: '', webhookSelesai: '', webhookPengeluaran: '', webhookStok: '' } };
   state.stockMovements = []; state.dirtyCash = []; state.slips = [];
   let filters = { tanggalDari: '', tanggalSampai: '', pemesan: '', status: '', statusPesanan: '' };
@@ -886,7 +879,6 @@
   }
 
   function getSavedCreds(){
-    if(SUPABASE_URL && SUPABASE_ANON_KEY) return { url: SUPABASE_URL, key: SUPABASE_ANON_KEY };
     try{
       const url = localStorage.getItem('dbrp_url');
       const key = localStorage.getItem('dbrp_key');
@@ -2864,7 +2856,7 @@
     }catch(err){
       console.error(err);
       setConn('off', 'Gagal tersambung');
-      errEl.textContent = (SUPABASE_URL && SUPABASE_ANON_KEY) ? 'Gagal menyambung ke database. Periksa SUPABASE_URL dan SUPABASE_ANON_KEY di index.html, lalu pastikan schema.sql sudah dijalankan.' : 'Gagal menyambung: periksa Project URL dan Anon Key, lalu pastikan tabel sudah dibuat.';
+      errEl.textContent = 'Gagal menyambung: periksa Project URL dan Anon Key, lalu pastikan tabel sudah dibuat.';
       errEl.style.display = 'block';
       overlay.style.display = 'flex';
     }
