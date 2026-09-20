@@ -50,6 +50,11 @@
     main,footer{ margin-left:0; } main{ padding:16px; } .clock{ display:none; }
   }
   .view{ display:none; } .view.active{ display:block; }
+  .seg{ display:inline-flex; gap:2px; padding:3px; margin-bottom:16px; background:var(--bg-alt); border:1px solid var(--border); border-radius:var(--r); }
+  .seg-btn{ font:inherit; font-size:14px; padding:7px 16px; color:var(--text-dim); background:transparent; border:0; border-radius:4px; cursor:pointer; }
+  .seg-btn.active{ background:var(--panel-2); color:var(--brass-dim); font-weight:600; }
+  .seg-btn:hover{ color:var(--text); }
+  .item-form[hidden],.btn[hidden]{ display:none; }
   #view-config:not(.active) ~ #webhookLogSection{ display:none; }
 
   .section-head{ display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px 16px; margin:0 0 16px; }
@@ -358,9 +363,55 @@
   <!-- ITEM & STOK -->
   <section class="view" id="view-item">
     <div class="section-head">
-      <h2>Barang <em>Masuk &amp; Keluar</em></h2>
-      <span class="sub">Ubah stok manual — keterangan boleh dikosongkan dan tiap pergerakan tetap tercatat di riwayat</span>
+      <h2>Item &amp; Stok</h2>
+      <span class="sub" id="itemCount">0 item</span>
     </div>
+    <div class="seg" id="itemTabs">
+      <button type="button" class="seg-btn active" data-pane="list">Daftar Item</button>
+      <button type="button" class="seg-btn" data-pane="stock">Stok Masuk &amp; Keluar</button>
+    </div>
+
+    <div id="itemPaneList">
+      <div class="cashflow-grid-4">
+        <div class="kpi-card"><div class="kpi-label">Total item</div><div class="kpi-value" id="iSumAll">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Stok aman</div><div class="kpi-value" style="color:var(--green);" id="iSumOk">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Stok menipis</div><div class="kpi-value" style="color:var(--gold);" id="iSumLow">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Stok habis</div><div class="kpi-value" style="color:var(--red);" id="iSumOut">0</div></div>
+      </div>
+
+      <div class="filter-bar" style="grid-template-columns:2fr 1fr 1fr auto;">
+        <div class="field"><label>Cari item</label><input type="search" id="iSearch" placeholder="Ketik nama item..."></div>
+        <div class="field"><label>Kategori</label><select id="iKatFilter"><option value="">Semua kategori</option></select></div>
+        <div class="field"><label>Status stok</label><select id="iStatFilter"><option value="">Semua status</option><option value="ok">Aman</option><option value="mid">Menipis</option><option value="bad">Habis</option></select></div>
+        <div class="field"><label>&nbsp;</label><button type="button" class="btn" id="iNewBtn">+ Item baru</button></div>
+      </div>
+
+      <form class="item-form" id="itemForm" hidden>
+        <input type="hidden" id="iEditId">
+        <div class="full" style="text-align:left;"><strong id="itemFormTitle">Item baru</strong></div>
+        <div class="field" style="grid-column:span 2;"><label>Nama item</label><input type="text" id="iNama" required></div>
+        <div class="field"><label>Kategori</label><input type="text" id="iKategori" list="iKatList" placeholder="Senjata / Peluru / Vest" required><datalist id="iKatList"></datalist></div>
+        <div class="field"><label>Stok awal</label><input type="number" id="iStok" min="0" required><small id="iStokHint" style="color:var(--text-faint);font-size:12px;" hidden>Ubah stok lewat tab Stok Masuk &amp; Keluar</small></div>
+        <div class="field"><label>Harga Aliansi</label><input type="number" id="iHargaA" min="0" required></div>
+        <div class="field"><label>Maks. per pesanan (Aliansi)</label><input type="number" id="iMaxA" min="0" required></div>
+        <div class="field"><label>Harga Non Aliansi</label><input type="number" id="iHargaN" min="0" required></div>
+        <div class="field"><label>Maks. per pesanan (Non Aliansi)</label><input type="number" id="iMaxN" min="0" required></div>
+        <div class="full">
+          <button type="submit" class="btn" id="itemSaveBtn">Simpan item</button>
+          <button type="button" class="btn ghost" id="itemCancelBtn">Batal</button>
+        </div>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th>Kategori</th><th class="num">Stok</th><th>Status</th><th class="num">Harga Aliansi</th><th class="num">Harga Non Aliansi</th><th></th></tr></thead>
+          <tbody id="itemRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="itemPaneStock" hidden>
+      <p class="stamp" style="margin:0 0 12px;">Catat barang yang datang atau keluar di luar pesanan. Bisa beberapa barang sekaligus, dan tiap pergerakan tersimpan di riwayat.</p>
     <form class="item-form" id="stockMoveForm" style="grid-template-columns:1fr;">
       <div id="smRows"></div>
       <div><button type="button" class="btn ghost sm" id="smAddRow">+ Tambah Barang</button></div>
@@ -377,33 +428,7 @@
       </table>
     </div>
     <div style="margin:-6px 0 8px;"><button type="button" class="btn ghost sm" id="smMoreBtn" hidden></button></div>
-
-    <div class="section-head" style="margin-top:34px;">
-      <h2>Master <em>Item</em> &amp; Harga</h2>
-      <span class="sub" id="itemCount">0 item</span>
     </div>
-
-    <form class="item-form" id="itemForm">
-      <div class="field"><label>Nama Item</label><input type="text" id="iNama" required></div>
-      <div class="field"><label>Kategori</label><input type="text" id="iKategori" placeholder="Senjata / Peluru / Vest" required></div>
-      <div class="field"><label>Stok</label><input type="number" id="iStok" min="0" required></div>
-      <div class="field"><label>Harga Aliansi</label><input type="number" id="iHargaA" min="0" required></div>
-      <div class="field"><label>Max / Order (Aliansi)</label><input type="number" id="iMaxA" min="0" required></div>
-      <div class="field"><label>Harga Non Aliansi</label><input type="number" id="iHargaN" min="0" required></div>
-      <div class="field"><label>Max / Order (Non Aliansi)</label><input type="number" id="iMaxN" min="0" required></div>
-      <div class="full"><button type="submit" class="btn">+ Simpan Item</button></div>
-    </form>
-
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>Item</th><th>Kategori</th><th class="num">Harga Aliansi</th><th class="num">Max A</th>
-          <th class="num">Harga Non</th><th class="num">Max N</th><th class="num">Stok</th><th>Status</th><th></th>
-        </tr></thead>
-        <tbody id="itemRows"></tbody>
-      </table>
-    </div>
-
   </section>
 
   <!-- CRAFTING -->
@@ -1281,32 +1306,61 @@
   }
 
   // ---------- Render: Items table ----------
+  function itemStatus(i){ return i.stok <= 0 ? ['HABIS','bad'] : (i.stok <= state.config.batasStok ? ['MENIPIS','mid'] : ['AMAN','ok']); }
   function renderItems(){
-    const tbody = document.getElementById('itemRows');
-    if(!state.items.length){
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Belum ada item.</td></tr>';
-    } else {
-      tbody.innerHTML = state.items.map(i=>{
-        let stokClass = 'full';
-        if(i.stok <= 0) stokClass = 'low';
-        else if(i.stok <= state.config.batasStok) stokClass = 'low';
-        else if(i.stok <= state.config.batasStok*2) stokClass = 'mid';
-        const stokLabel = i.stok <= 0 ? 'HABIS' : (i.stok <= state.config.batasStok ? 'MENIPIS' : 'AMAN');
-        return `<tr>
-          <td>${i.nama}</td>
-          <td>${i.kategori}</td>
-          <td class="num">${rupiah(i.hargaA)}</td>
-          <td class="num">${i.maxA}</td>
-          <td class="num">${rupiah(i.hargaN)}</td>
-          <td class="num">${i.maxN}</td>
-          <td class="num">${i.stok}</td>
-          <td><span class="badge ${stokClass}">${stokLabel}</span></td>
-          <td><button class="icon-btn" data-del-item="${i.id}" title="Hapus">✕</button></td>
-        </tr>`;
-      }).join('');
-    }
-    document.getElementById('itemCount').textContent = state.items.length + ' item';
+    const all = state.items;
+    const cnt = k => all.filter(i=>itemStatus(i)[1]===k).length;
+    document.getElementById('iSumAll').textContent = all.length;
+    document.getElementById('iSumOk').textContent = cnt('ok');
+    document.getElementById('iSumLow').textContent = cnt('mid');
+    document.getElementById('iSumOut').textContent = cnt('bad');
+    document.getElementById('itemCount').textContent = all.length + ' item';
+
+    const kats = [...new Set(all.map(i=>i.kategori).filter(Boolean))].sort();
+    const katSel = document.getElementById('iKatFilter'), curKat = katSel.value;
+    katSel.innerHTML = '<option value="">Semua kategori</option>' + kats.map(k=>`<option value="${esc(k)}">${esc(k)}</option>`).join('');
+    katSel.value = kats.includes(curKat) ? curKat : '';
+    document.getElementById('iKatList').innerHTML = kats.map(k=>`<option value="${esc(k)}">`).join('');
+
+    const q = document.getElementById('iSearch').value.trim().toLowerCase(), st = document.getElementById('iStatFilter').value, kt = katSel.value;
+    const list = all.filter(i=> (!q || i.nama.toLowerCase().includes(q)) && (!kt || i.kategori===kt) && (!st || itemStatus(i)[1]===st));
+    document.getElementById('itemRows').innerHTML = list.length ? list.map(i=>{
+      const [lbl, cls] = itemStatus(i);
+      return `<tr>
+        <td><b>${esc(i.nama)}</b></td>
+        <td>${esc(i.kategori)}</td>
+        <td class="num"><b>${i.stok}</b></td>
+        <td><span class="badge ${cls}">${lbl}</span></td>
+        <td class="num">${rupiah(i.hargaA)}<div style="font-size:12px;color:var(--text-faint);">maks ${i.maxA}</div></td>
+        <td class="num">${rupiah(i.hargaN)}<div style="font-size:12px;color:var(--text-faint);">maks ${i.maxN}</div></td>
+        <td style="white-space:nowrap;text-align:right;"><button class="btn ghost sm" data-stock-item="${i.id}">Stok</button> <button class="btn ghost sm" data-edit-item="${i.id}">Ubah</button> <button class="icon-btn" data-del-item="${i.id}" title="Hapus">✕</button></td>
+      </tr>`;
+    }).join('') : `<tr class="empty-row"><td colspan="7">${all.length ? 'Tidak ada item yang cocok dengan filter.' : 'Belum ada item. Klik “+ Item baru” untuk menambahkan.'}</td></tr>`;
   }
+  ['iSearch','iKatFilter','iStatFilter'].forEach(id=> document.getElementById(id).addEventListener('input', renderItems));
+
+  function showItemPane(name){
+    document.querySelectorAll('#itemTabs .seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.pane===name));
+    document.getElementById('itemPaneList').hidden = name !== 'list';
+    document.getElementById('itemPaneStock').hidden = name !== 'stock';
+  }
+  document.getElementById('itemTabs').addEventListener('click', e=>{ const b = e.target.closest('.seg-btn'); if(b) showItemPane(b.dataset.pane); });
+
+  function openItemForm(item){
+    const f = document.getElementById('itemForm'); f.reset();
+    document.getElementById('iEditId').value = item ? item.id : '';
+    document.getElementById('itemFormTitle').textContent = item ? `Ubah item: ${item.nama}` : 'Item baru';
+    document.getElementById('itemSaveBtn').textContent = item ? 'Simpan perubahan' : 'Simpan item';
+    document.getElementById('iStokHint').hidden = !item;
+    document.getElementById('iStok').readOnly = !!item;
+    if(item){
+      iNama.value = item.nama; iKategori.value = item.kategori; iStok.value = item.stok;
+      iHargaA.value = item.hargaA; iMaxA.value = item.maxA; iHargaN.value = item.hargaN; iMaxN.value = item.maxN;
+    }
+    f.hidden = false; f.scrollIntoView({ behavior:'smooth', block:'center' }); iNama.focus();
+  }
+  document.getElementById('iNewBtn').addEventListener('click', ()=> openItemForm(null));
+  document.getElementById('itemCancelBtn').addEventListener('click', ()=>{ document.getElementById('itemForm').hidden = true; });
 
   // ---------- Pengeluaran (restock expenses) ----------
   let expenseFilters = { tanggalDari:'', tanggalSampai:'', keyword:'' };
@@ -2247,29 +2301,42 @@
   });
 
   // ---------- Item form ----------
+  async function dbUpdateItem(i){
+    const { error } = await sb.from('items').update({ nama:i.nama, kategori:i.kategori, harga_a:i.hargaA, max_a:i.maxA, harga_n:i.hargaN, max_n:i.maxN }).eq('id', i.id);
+    if(error) console.error('update item failed', error);
+  }
   document.getElementById('itemForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
-    const nama = document.getElementById('iNama').value.trim();
-    const kategori = document.getElementById('iKategori').value.trim();
-    const stok = Number(document.getElementById('iStok').value);
-    const hargaA = Number(document.getElementById('iHargaA').value);
-    const maxA = Number(document.getElementById('iMaxA').value);
-    const hargaN = Number(document.getElementById('iHargaN').value);
-    const maxN = Number(document.getElementById('iMaxN').value);
-    if(!nama||!kategori){ toast('Lengkapi nama dan kategori.'); return; }
-
-    const newItem = { id: uid(), nama, kategori, stok, hargaA, maxA, hargaN, maxN };
-    state.items.push(newItem);
-    await dbInsertItem(newItem);
+    const v = id => document.getElementById(id).value;
+    const nama = v('iNama').trim(), kategori = v('iKategori').trim();
+    if(!nama || !kategori){ toast('Lengkapi nama dan kategori.'); return; }
+    const data = { nama, kategori, hargaA:Number(v('iHargaA')), maxA:Number(v('iMaxA')), hargaN:Number(v('iHargaN')), maxN:Number(v('iMaxN')) };
+    const editId = v('iEditId');
+    if(editId){
+      const it = itemById(editId); if(!it) return;
+      Object.assign(it, data); await dbUpdateItem(it); toast('Item diperbarui.');
+    } else {
+      if(state.items.some(i=>i.nama.toLowerCase()===nama.toLowerCase()) && !confirm(`Item “${nama}” sudah ada. Tetap tambahkan?`)) return;
+      const newItem = { id: uid(), stok: Number(v('iStok')), ...data };
+      state.items.push(newItem); await dbInsertItem(newItem); toast('Item disimpan.');
+    }
+    e.target.hidden = true; e.target.reset();
     renderAll();
-    e.target.reset();
-    toast('Item disimpan.');
   });
 
   document.getElementById('itemRows').addEventListener('click', async (e)=>{
-    const btn = e.target.closest('[data-del-item]');
+    const edit = e.target.closest('[data-edit-item]'), stk = e.target.closest('[data-stock-item]'), btn = e.target.closest('[data-del-item]');
+    if(edit){ openItemForm(itemById(edit.dataset.editItem)); return; }
+    if(stk){
+      showItemPane('stock');
+      const rows = [...document.querySelectorAll('#smRows .sm-row')];
+      const row = rows.find(r=>!r.querySelector('.sm-item').value) || (addSmRow(), document.querySelector('#smRows .sm-row:last-child'));
+      row.querySelector('.sm-item').value = stk.dataset.stockItem; row.querySelector('.sm-qty').focus();
+      return;
+    }
     if(!btn) return;
-    const id = btn.dataset.delItem;
+    const id = btn.dataset.delItem, it = itemById(id);
+    if(!confirm(`Hapus item “${it ? it.nama : ''}”? Tindakan ini tidak bisa dibatalkan.`)) return;
     const inUse = state.orders.some(o=>o.itemId===id);
     const inRecipe = state.recipes.some(r=> r.resultItemId===id || (r.bahan||[]).some(b=>b.itemId===id));
     if(inUse && !confirm('Item ini digunakan pada pesanan yang sudah ada. Tetap hapus dari master item?')) return;
