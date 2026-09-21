@@ -71,10 +71,10 @@
   .section-head .sub{ font-size:13px; color:var(--text-faint); max-width:70ch; }
 
   /* Cards / panels */
-  .kpi-grid,.kpi-grid-3,.cashflow-grid,.cashflow-grid-4{ display:grid; gap:12px; margin-bottom:18px; }
-  .kpi-grid,.cashflow-grid-4{ grid-template-columns:repeat(4,1fr); } .kpi-grid-3,.cashflow-grid{ grid-template-columns:repeat(3,1fr); }
-  @media(max-width:900px){ .kpi-grid,.cashflow-grid-4{ grid-template-columns:repeat(2,1fr); } .kpi-grid-3,.cashflow-grid{ grid-template-columns:1fr; } }
-  @media(max-width:520px){ .kpi-grid,.cashflow-grid-4{ grid-template-columns:1fr; } }
+  .kpi-grid,.kpi-grid-3,.cashflow-grid,.cashflow-grid-4,.cashflow-grid-5{ display:grid; gap:12px; margin-bottom:18px; }
+  .kpi-grid,.cashflow-grid-4{ grid-template-columns:repeat(4,1fr); } .kpi-grid-3,.cashflow-grid{ grid-template-columns:repeat(3,1fr); } .cashflow-grid-5{ grid-template-columns:repeat(5,1fr); }
+  @media(max-width:900px){ .kpi-grid,.cashflow-grid-4{ grid-template-columns:repeat(2,1fr); } .kpi-grid-3,.cashflow-grid{ grid-template-columns:1fr; } .cashflow-grid-5{ grid-template-columns:repeat(3,1fr); } }
+  @media(max-width:520px){ .kpi-grid,.cashflow-grid-4,.cashflow-grid-5{ grid-template-columns:1fr; } }
   .kpi-card,.panel,.config-card,.order-form,.item-form,.filter-bar,.expense-form,.setup-card,.modal-card{ background:var(--panel); border:1px solid var(--border); border-radius:var(--r); }
   .kpi-card{ padding:14px 16px; }
   .kpi-label{ font-size:13px; color:var(--text-faint); }
@@ -154,7 +154,7 @@
   .cell-in{ height:34px; }
   #expenseRows td{ padding-top:4px; padding-bottom:4px; }
   @media(max-width:900px){ .tab-group{ display:none; } }
-  @media(max-width:640px){ .kpi-grid,.cashflow-grid-4,.cashflow-grid,.kpi-grid-3{ grid-template-columns:repeat(2,1fr) !important; } .kpi-card{ padding:12px; } .kpi-value{ font-size:19px; } }
+  @media(max-width:640px){ .kpi-grid,.cashflow-grid-4,.cashflow-grid,.kpi-grid-3,.cashflow-grid-5{ grid-template-columns:repeat(2,1fr) !important; } .kpi-card{ padding:12px; } .kpi-value{ font-size:19px; } }
   .chips{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 8px; }
   .chip{ font:inherit; font-size:13px; padding:5px 12px; color:var(--text-dim); background:var(--panel); border:1px solid var(--border-hi); border-radius:999px; cursor:pointer; }
   .chip:hover{ color:var(--text); border-color:var(--brass); } .chip.active{ color:var(--brass-dim); border-color:var(--brass); background:rgba(30,144,255,.14); }
@@ -300,6 +300,17 @@
     </div>
     <div class="stamp" style="color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px; margin:-10px 0 22px;">
       Saldo Kas Saat Ini = Saldo Awal + Total Pemasukan − Total Pengeluaran. Pemasukan hanya dihitung dari pesanan berstatus SELESAI dan uang kotor yang sudah dibersihkan.
+    </div>
+
+    <div class="sub-head">🧺 Kas Kotor <span style="font-weight:400;color:var(--text-faint);font-size:12px;">(belum disetor)</span></div>
+    <div class="cashflow-grid-4">
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🏦</div><div class="kpi-body"><div class="kpi-label">Saldo Awal Uang Kotor</div><div class="kpi-value" id="dashKotorAwal">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Total Pemasukan Uang Kotor</div><div class="kpi-value green" id="dashKotorMasuk">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📤</div><div class="kpi-body"><div class="kpi-label">Total Pengeluaran Uang Kotor</div><div class="kpi-value red" id="dashKotorKeluar">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">⏳</div><div class="kpi-body"><div class="kpi-label">Saldo Kas Saat Ini (Kotor)</div><div class="kpi-value gold" id="dashKotorSaldo">Rp0</div></div></div>
+    </div>
+    <div class="stamp" style="color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px; margin:-10px 0 22px;">
+      Saldo Kas Saat Ini (Kotor) = Saldo Awal + Total Pemasukan Uang Kotor − Total Pengeluaran Uang Kotor. "Total Pengeluaran Uang Kotor" mencakup uang yang sudah dibersihkan ke Kas Bersih maupun yang dipakai langsung sebagai pengeluaran. Angka ini adalah uang yang <b>masih mengendap, belum resmi disetor</b>.
     </div>
 
     <div class="dash-grid">
@@ -651,24 +662,26 @@
     </div>
 
     <div id="lgPaneKotor" hidden>
-    <div class="info-box warn"><span class="info-icon">🧺</span><span>Pakai tab ini untuk mencatat uang yang sudah kamu terima tapi <b>belum resmi disetor</b> (misalnya belum masuk rekening/kasir utama). Setelah kamu tekan <b>Bersihkan</b>, nominalnya baru pindah jadi Kas Bersih dan otomatis muncul di Buku Kas.</span></div>
-    <div class="cashflow-grid-4">
+    <div class="info-box warn"><span class="info-icon">🧺</span><span>Pakai tab ini untuk mencatat uang yang sudah kamu terima tapi <b>belum resmi disetor</b> (misalnya belum masuk rekening/kasir utama). Setelah kamu tekan <b>Bersihkan</b>, nominalnya baru pindah jadi Kas Bersih dan otomatis muncul di Buku Kas. Kalau uang kotor ini langsung dipakai/dibelanjakan sebelum sempat disetor, catat sebagai <b>Pengeluaran</b> — nominalnya berkurang dari sisa uang kotor tapi tidak masuk ke Kas Bersih.</span></div>
+    <div class="cashflow-grid-5">
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🏦</div><div class="kpi-body"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="dcAwal">Rp0</div><button type="button" class="btn ghost sm" id="dcAwalBtn" style="margin-top:8px;">✏️ Ubah Saldo Awal</button></div></div>
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Total Uang Kotor Masuk</div><div class="kpi-value green" id="dcMasuk">Rp0</div></div></div>
-      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🧼</div><div class="kpi-body"><div class="kpi-label">Sudah Dibersihkan</div><div class="kpi-value red" id="dcKeluar">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🧼</div><div class="kpi-body"><div class="kpi-label">Sudah Dibersihkan</div><div class="kpi-value brass" id="dcKeluar">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📤</div><div class="kpi-body"><div class="kpi-label">Pengeluaran Langsung</div><div class="kpi-value red" id="dcPengeluaran">Rp0</div></div></div>
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">⏳</div><div class="kpi-body"><div class="kpi-label">Sisa Belum Dibersihkan</div><div class="kpi-value gold" id="dcAkhir">Rp0</div></div></div>
     </div>
-    <div class="stamp" style="margin:-6px 0 14px;">Sisa Belum Dibersihkan = Saldo Awal + Total Uang Kotor Masuk − Sudah Dibersihkan. Semakin kecil angka ini, semakin sedikit uang yang masih mengendap di luar kas utama.</div>
-    <form class="item-form" id="dirtyForm" style="grid-template-columns:1fr 1fr 3fr;">
+    <div class="stamp" style="margin:-6px 0 14px;">Sisa Belum Dibersihkan = Saldo Awal + Uang Kotor Masuk − Sudah Dibersihkan − Pengeluaran Langsung. Semakin kecil angka ini, semakin sedikit uang yang masih mengendap di luar kas utama.</div>
+    <form class="item-form" id="dirtyForm" style="grid-template-columns:1fr 1fr 1fr 2fr;">
+      <div class="field"><label>Jenis</label><select id="dcJenis"><option value="MASUK">📥 Uang Masuk</option><option value="KELUAR">📤 Pengeluaran</option></select></div>
       <div class="field"><label>Tanggal</label><input type="date" id="dcTanggal" required></div>
       <div class="field"><label>Nominal (Rp)</label><input type="number" id="dcNominal" min="1" step="1" placeholder="Contoh: 150000" required></div>
       <div class="field"><label>Keterangan (wajib)</label><input type="text" id="dcKet" placeholder="Contoh: Hasil penjualan belum disetor" required></div>
-      <div class="full"><button type="submit" class="btn">➕ Catat Uang Kotor</button></div>
+      <div class="full"><button type="submit" class="btn" id="dcSubmitBtn">➕ Catat Uang Masuk</button></div>
     </form>
     <div style="margin:0 0 10px;"><button type="button" class="btn ghost" id="dcCleanAllBtn" hidden></button></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Tanggal</th><th class="num">Nominal</th><th>Keterangan</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Tanggal</th><th>Jenis</th><th class="num">Nominal</th><th>Keterangan</th><th>Status</th><th></th></tr></thead>
         <tbody id="dirtyRows"></tbody>
       </table>
     </div>
@@ -862,6 +875,65 @@
       </div>
     </div>
     <div class="config-card" style="max-width:520px; margin-top:16px;">
+      <label>Webhook — Barang Masuk &amp; Keluar</label>
+      <input type="text" id="cWebhookStokGerak" placeholder="https://discord.com/api/webhooks/...">
+      <div class="stamp" style="margin-top:10px; color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px;">
+        Terkirim setiap kali ada pencatatan barang masuk atau keluar secara manual di tab Item &amp; Stok (di luar pesanan).
+      </div>
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button class="btn" data-save-webhook="webhookStokGerak" data-input="cWebhookStokGerak">Simpan</button>
+        <button class="btn ghost" data-test-webhook="cWebhookStokGerak">Kirim Tes</button>
+      </div>
+    </div>
+
+    <div class="config-card" style="max-width:520px; margin-top:16px;">
+      <label>Webhook — Crafting</label>
+      <input type="text" id="cWebhookCrafting" placeholder="https://discord.com/api/webhooks/...">
+      <div class="stamp" style="margin-top:10px; color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px;">
+        Terkirim setiap kali sebuah resep berhasil di-craft, berisi bahan yang terpakai dan hasil yang didapat.
+      </div>
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button class="btn" data-save-webhook="webhookCrafting" data-input="cWebhookCrafting">Simpan</button>
+        <button class="btn ghost" data-test-webhook="cWebhookCrafting">Kirim Tes</button>
+      </div>
+    </div>
+
+    <div class="config-card" style="max-width:520px; margin-top:16px;">
+      <label>Webhook — Pembukuan · Arus Kas</label>
+      <input type="text" id="cWebhookPembukuan" placeholder="https://discord.com/api/webhooks/...">
+      <div class="stamp" style="margin-top:10px; color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px;">
+        Rekap gabungan tiap kali Kas Bersih di Buku Kas berubah (pesanan selesai, pengeluaran, gaji dibayar, atau uang kotor dibersihkan), lengkap dengan saldo kas terkini.
+      </div>
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button class="btn" data-save-webhook="webhookPembukuan" data-input="cWebhookPembukuan">Simpan</button>
+        <button class="btn ghost" data-test-webhook="cWebhookPembukuan">Kirim Tes</button>
+      </div>
+    </div>
+
+    <div class="config-card" style="max-width:520px; margin-top:16px;">
+      <label>Webhook — Arus Uang Kotor</label>
+      <input type="text" id="cWebhookUangKotor" placeholder="https://discord.com/api/webhooks/...">
+      <div class="stamp" style="margin-top:10px; color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px;">
+        Terkirim setiap kali ada uang kotor masuk, dibersihkan ke Kas Bersih, atau dipakai langsung sebagai pengeluaran.
+      </div>
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button class="btn" data-save-webhook="webhookUangKotor" data-input="cWebhookUangKotor">Simpan</button>
+        <button class="btn ghost" data-test-webhook="cWebhookUangKotor">Kirim Tes</button>
+      </div>
+    </div>
+
+    <div class="config-card" style="max-width:520px; margin-top:16px;">
+      <label>Webhook — Penggajian</label>
+      <input type="text" id="cWebhookPengajian" placeholder="https://discord.com/api/webhooks/...">
+      <div class="stamp" style="margin-top:10px; color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px;">
+        Terkirim setiap kali slip gaji dibuat, dibayar, atau dibatalkan.
+      </div>
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button class="btn" data-save-webhook="webhookPengajian" data-input="cWebhookPengajian">Simpan</button>
+        <button class="btn ghost" data-test-webhook="cWebhookPengajian">Kirim Tes</button>
+      </div>
+    </div>
+    <div class="config-card" style="max-width:520px; margin-top:16px;">
       <label>Webhook — Rekap Harian Otomatis</label>
       <input type="text" id="cWebhookRekapHarian" placeholder="https://discord.com/api/webhooks/...">
       <label style="margin-top:12px;">Jam Kirim (WIB, 0–23)</label>
@@ -960,7 +1032,7 @@
   const SUPABASE_URL = 'https://cezptukukcoxlayhyjdu.supabase.co';       // contoh: 'https://xxxxx.supabase.co'
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlenB0dWt1a2NveGxheWh5amR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MjYwNjAsImV4cCI6MjEwNTQwMjA2MH0.JZiTTRQvBkMIjeYsTJzlwAXDQPy1RTvl0G5pImnrPyQ';  // contoh: 'eyJhbGciOi...'
 
-  let state = { items: [], orders: [], archives: [], expenses: [], recipes: [], craftingLogs: [], config: { targetBulanan: 100000000, batasStok: 20, currency: 'Rp', saldoAwal: 0, webhookPesanan: '', webhookSelesai: '', webhookPengeluaran: '', webhookStok: '' } };
+  let state = { items: [], orders: [], archives: [], expenses: [], recipes: [], craftingLogs: [], config: { targetBulanan: 100000000, batasStok: 20, currency: 'Rp', saldoAwal: 0, webhookPesanan: '', webhookSelesai: '', webhookPengeluaran: '', webhookStok: '', webhookStokGerak: '', webhookCrafting: '', webhookPembukuan: '', webhookUangKotor: '', webhookPengajian: '' } };
   state.stockMovements = []; state.dirtyCash = []; state.slips = [];
   let filters = { tanggalDari: '', tanggalSampai: '', pemesan: '', status: '', statusPesanan: '' };
   let ledgerFilters = { tanggalDari: '', tanggalSampai: '', keyword: '' };
@@ -1044,7 +1116,7 @@
   function rowsToCraftingLog(r){ return { id:r.id, recipeId:r.recipe_id, namaResep:r.nama_resep, resultItemId:r.result_item_id, namaHasil:r.nama_hasil, jumlahCraft:Number(r.jumlah_craft), hasilJumlah:Number(r.hasil_jumlah), bahanTerpakai:(r.bahan_terpakai||[]), dibuatPada:r.dibuat_pada }; }
 
   function rowsToStockMove(r){ return { id:r.id, itemId:r.item_id, itemNama:r.item_nama||'', tipe:r.tipe, jumlah:Number(r.jumlah), stokSetelah:Number(r.stok_setelah), keterangan:r.keterangan||'', dibuatPada:r.dibuat_pada }; }
-  function rowsToDirty(r){ return { id:r.id, tanggal:r.tanggal, nominal:Number(r.nominal), keterangan:r.keterangan||'', status:r.status||'KOTOR', dibersihkanPada:r.dibersihkan_pada, dibuatPada:r.dibuat_pada }; }
+  function rowsToDirty(r){ return { id:r.id, tanggal:r.tanggal, nominal:Number(r.nominal), keterangan:r.keterangan||'', status:r.status||'KOTOR', jenis:r.jenis||'MASUK', dibersihkanPada:r.dibersihkan_pada, dibuatPada:r.dibuat_pada }; }
   const esc = t => String(t==null?'':t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   // ---------- Storage (Supabase) ----------
@@ -1106,13 +1178,23 @@
         webhookPesanan: map.discord_webhook_pesanan ?? legacyWebhook,
         webhookSelesai: map.discord_webhook_selesai ?? (map.discord_webhook_status ?? legacyWebhook),
         webhookPengeluaran: map.discord_webhook_pengeluaran ?? legacyWebhook,
-        webhookStok: map.discord_webhook_stok ?? legacyWebhook
+        webhookStok: map.discord_webhook_stok ?? legacyWebhook,
+        webhookStokGerak: map.discord_webhook_stok_gerak ?? '',
+        webhookCrafting: map.discord_webhook_crafting ?? '',
+        webhookPembukuan: map.discord_webhook_pembukuan ?? '',
+        webhookUangKotor: map.discord_webhook_uang_kotor ?? '',
+        webhookPengajian: map.discord_webhook_pengajian ?? ''
       };
       const newKeys = [
         ['discord_webhook_pesanan', state.config.webhookPesanan],
         ['discord_webhook_selesai', state.config.webhookSelesai],
         ['discord_webhook_pengeluaran', state.config.webhookPengeluaran],
-        ['discord_webhook_stok', state.config.webhookStok]
+        ['discord_webhook_stok', state.config.webhookStok],
+        ['discord_webhook_stok_gerak', state.config.webhookStokGerak],
+        ['discord_webhook_crafting', state.config.webhookCrafting],
+        ['discord_webhook_pembukuan', state.config.webhookPembukuan],
+        ['discord_webhook_uang_kotor', state.config.webhookUangKotor],
+        ['discord_webhook_pengajian', state.config.webhookPengajian]
       ];
       for(const [key, value] of newKeys){
         if(!(key in map)) await sb.from('config').insert([{ key, value }]);
@@ -1129,6 +1211,11 @@
         { key:'discord_webhook_selesai', value:'' },
         { key:'discord_webhook_pengeluaran', value:'' },
         { key:'discord_webhook_stok', value:'' },
+        { key:'discord_webhook_stok_gerak', value:'' },
+        { key:'discord_webhook_crafting', value:'' },
+        { key:'discord_webhook_pembukuan', value:'' },
+        { key:'discord_webhook_uang_kotor', value:'' },
+        { key:'discord_webhook_pengajian', value:'' },
         { key:'saldo_awal', value:'0' }
       ]);
     }
@@ -1228,6 +1315,11 @@
       sb.from('config').upsert([{ key:'discord_webhook_selesai', value:cfg.webhookSelesai || '' }], { onConflict:'key' }),
       sb.from('config').upsert([{ key:'discord_webhook_pengeluaran', value:cfg.webhookPengeluaran || '' }], { onConflict:'key' }),
       sb.from('config').upsert([{ key:'discord_webhook_stok', value:cfg.webhookStok || '' }], { onConflict:'key' }),
+      sb.from('config').upsert([{ key:'discord_webhook_stok_gerak', value:cfg.webhookStokGerak || '' }], { onConflict:'key' }),
+      sb.from('config').upsert([{ key:'discord_webhook_crafting', value:cfg.webhookCrafting || '' }], { onConflict:'key' }),
+      sb.from('config').upsert([{ key:'discord_webhook_pembukuan', value:cfg.webhookPembukuan || '' }], { onConflict:'key' }),
+      sb.from('config').upsert([{ key:'discord_webhook_uang_kotor', value:cfg.webhookUangKotor || '' }], { onConflict:'key' }),
+      sb.from('config').upsert([{ key:'discord_webhook_pengajian', value:cfg.webhookPengajian || '' }], { onConflict:'key' }),
       sb.from('config').upsert([{ key:'saldo_awal', value:String(cfg.saldoAwal||0) }], { onConflict:'key' }),
       sb.from('config').upsert([{ key:'saldo_awal_kotor', value:String(cfg.saldoAwalKotor||0) }], { onConflict:'key' }),
     ]);
@@ -1249,7 +1341,12 @@
       webhookPesanan: state.config.webhookPesanan || '',
       webhookSelesai: state.config.webhookSelesai || '',
       webhookPengeluaran: state.config.webhookPengeluaran || '',
-      webhookStok: state.config.webhookStok || ''
+      webhookStok: state.config.webhookStok || '',
+      webhookStokGerak: state.config.webhookStokGerak || '',
+      webhookCrafting: state.config.webhookCrafting || '',
+      webhookPembukuan: state.config.webhookPembukuan || '',
+      webhookUangKotor: state.config.webhookUangKotor || '',
+      webhookPengajian: state.config.webhookPengajian || ''
     });
   }
 
@@ -1296,7 +1393,8 @@
   function computeTotalPemasukanSelesai(){
     return state.orders.reduce((sum, o) => (o.statusPesanan === 'SELESAI' ? sum + (o.total||0) : sum), 0);
   }
-  function computeKasBersih(){ return state.dirtyCash.reduce((s,d)=> d.status==='BERSIH' ? s+d.nominal : s, 0); }
+  function computeKasBersih(){ return state.dirtyCash.reduce((s,d)=> (d.jenis!=='KELUAR' && d.status==='BERSIH') ? s+d.nominal : s, 0); }
+  function computeDirtyExpense(){ return state.dirtyCash.reduce((s,d)=> d.jenis==='KELUAR' ? s+d.nominal : s, 0); }
   function itemByName(name){ return state.items.find(i=>i.nama===name); }
 
   function computeOrder(jenis, itemId, jumlah){
@@ -1808,6 +1906,7 @@
       await dbInsertExpense(expense);
       if(item){ item.stok += r.jumlah; await dbUpdateItemStok(item.id, item.stok); }
       sendDiscordExpenseRecap(expense);
+      sendDiscordLedgerRecap({ jenis:'KELUAR', sumber:'Pengeluaran / Restock', nominal:expense.total, keterangan: expense.keterangan || expense.itemNama });
       savedCount++;
     }
 
@@ -2206,6 +2305,15 @@
     document.getElementById('dashArusKas').textContent = rupiah(saldoKasSaatIni);
     document.getElementById('dashArusKas').style.color = saldoKasSaatIni < 0 ? 'var(--red)' : 'var(--brass)';
 
+    const kotorAwal = state.config.saldoAwalKotor || 0;
+    const kotorMasuk = state.dirtyCash.reduce((s,d)=> d.jenis!=='KELUAR' ? s+d.nominal : s, 0);
+    const kotorKeluar = computeKasBersih() + computeDirtyExpense(); // sudah dibersihkan + dipakai langsung
+    const kotorSaldo = kotorAwal + kotorMasuk - kotorKeluar;
+    document.getElementById('dashKotorAwal').textContent = rupiah(kotorAwal);
+    document.getElementById('dashKotorMasuk').textContent = rupiah(kotorMasuk);
+    document.getElementById('dashKotorKeluar').textContent = rupiah(kotorKeluar);
+    document.getElementById('dashKotorSaldo').textContent = rupiah(kotorSaldo);
+
     const target = state.config.targetBulanan || 0;
     const pct = target > 0 ? Math.min(100, (grandTotal/target)*100) : 0;
     document.getElementById('targetFill').style.width = pct.toFixed(1)+'%';
@@ -2442,7 +2550,10 @@
     order.statusPesanan = newStatus;
     await dbUpdateOrderStatusPesanan(id, newStatus);
     renderAll();
-    if(newStatus === 'SELESAI') sendDiscordIncomeRecap(order);
+    if(newStatus === 'SELESAI'){
+      sendDiscordIncomeRecap(order);
+      sendDiscordLedgerRecap({ jenis:'MASUK', sumber:'Pesanan Selesai', nominal:order.total, keterangan:`${order.pemesan} — ${order.jumlah}x` });
+    }
     toast(`Status pesanan diubah ke ${newStatus}${stockMsg}`);
   });
 
@@ -2653,6 +2764,9 @@
     resetSmRows();
     renderAll();
     toast(`${lines.length} barang ${tipe === 'MASUK' ? 'masuk' : 'keluar'} dicatat.`);
+    sendDiscordStockMoveRecap({ tipe, lines, keterangan: ket });
+    const lowItems = [...new Set(lines.map(l=>l.item))].filter(it=> it.stok <= state.config.batasStok);
+    if(lowItems.length) sendDiscordLowStockAlert(lowItems);
   }
   document.getElementById('smMasukBtn').addEventListener('click', ()=> recordStockMove('MASUK'));
   document.getElementById('smKeluarBtn').addEventListener('click', ()=> recordStockMove('KELUAR'));
@@ -2666,7 +2780,7 @@
     renderAll(); toast('✅ Saldo awal uang kotor disimpan.');
   });
   document.getElementById('dcCleanAllBtn').addEventListener('click', async ()=>{
-    const pending = state.dirtyCash.filter(d=>d.status==='KOTOR'); if(!pending.length) return;
+    const pending = state.dirtyCash.filter(d=>d.jenis!=='KELUAR' && d.status==='KOTOR'); if(!pending.length) return;
     const total = pending.reduce((a,d)=>a+d.nominal,0);
     if(!confirm(`Pindahkan ${pending.length} catatan senilai ${rupiah(total)} ke Kas Bersih?`)) return;
     const now = new Date().toISOString();
@@ -2676,34 +2790,52 @@
       if(error) console.error('update kas_kotor failed', error);
     }
     renderAll(); toast(`🧼 ${pending.length} catatan berhasil dibersihkan ke Kas Bersih.`);
+    sendDiscordDirtyCashRecap({ aksi:'BERSIHKAN', jumlahCatatan:pending.length, nominal:total, keterangan:'Bersihkan semua (massal)' });
+    sendDiscordLedgerRecap({ jenis:'MASUK', sumber:'Uang Kotor Dibersihkan', nominal:total, keterangan:`${pending.length} catatan uang kotor dibersihkan sekaligus` });
   });
   function renderDirty(){
     const awal = state.config.saldoAwalKotor || 0;
-    const masuk = state.dirtyCash.reduce((s,d)=>s+d.nominal,0), keluar = computeKasBersih();
+    const masuk = state.dirtyCash.reduce((s,d)=> d.jenis!=='KELUAR' ? s+d.nominal : s, 0);
+    const keluar = computeKasBersih();
+    const pengeluaran = computeDirtyExpense();
     document.getElementById('dcAwal').textContent = rupiah(awal);
     document.getElementById('dcMasuk').textContent = rupiah(masuk);
     document.getElementById('dcKeluar').textContent = rupiah(keluar);
-    document.getElementById('dcAkhir').textContent = rupiah(awal + masuk - keluar);
-    const pending = state.dirtyCash.filter(d=>d.status==='KOTOR'), pendTotal = pending.reduce((a,d)=>a+d.nominal,0), cab = document.getElementById('dcCleanAllBtn');
+    document.getElementById('dcPengeluaran').textContent = rupiah(pengeluaran);
+    document.getElementById('dcAkhir').textContent = rupiah(awal + masuk - keluar - pengeluaran);
+    const pending = state.dirtyCash.filter(d=>d.jenis!=='KELUAR' && d.status==='KOTOR'), pendTotal = pending.reduce((a,d)=>a+d.nominal,0), cab = document.getElementById('dcCleanAllBtn');
     cab.hidden = pending.length < 2; cab.textContent = `🧼 Bersihkan semua (${pending.length} catatan · ${rupiah(pendTotal)})`;
     const tb = document.getElementById('dirtyRows');
     tb.innerHTML = state.dirtyCash.length ? state.dirtyCash.map(d=>{
-      const bersih = d.status === 'BERSIH';
-      return `<tr><td>${fmtDateShort(d.tanggal)}</td><td class="num">${rupiah(d.nominal)}</td><td>${esc(d.keterangan)}</td><td><span class="badge ${bersih?'ok':'mid'}">${bersih?'✅ Bersih':'⏳ Belum Bersih'}</span></td><td>${bersih ? '' : `<button class="btn sm" data-clean-dirty="${d.id}" title="Pindahkan ke Kas Bersih">🧼 Bersihkan</button> <button class="icon-btn" data-del-dirty="${d.id}" title="Hapus catatan ini">✕</button>`}</td></tr>`;
-    }).join('') : '<tr class="empty-row"><td colspan="5">🧺 Belum ada catatan uang kotor. Gunakan form di atas untuk mencatat uang yang belum disetor.</td></tr>';
+      const isKeluar = d.jenis === 'KELUAR', bersih = d.status === 'BERSIH';
+      const jenisBadge = isKeluar ? '<span class="badge bad">📤 Keluar</span>' : '<span class="badge ok">📥 Masuk</span>';
+      const statusBadge = isKeluar ? '<span class="badge mid">✔️ Selesai</span>' : `<span class="badge ${bersih?'ok':'mid'}">${bersih?'✅ Bersih':'⏳ Belum Bersih'}</span>`;
+      const actions = isKeluar
+        ? `<button class="icon-btn" data-del-dirty="${d.id}" title="Hapus catatan ini">✕</button>`
+        : (bersih ? '' : `<button class="btn sm" data-clean-dirty="${d.id}" title="Pindahkan ke Kas Bersih">🧼 Bersihkan</button> <button class="icon-btn" data-del-dirty="${d.id}" title="Hapus catatan ini">✕</button>`);
+      return `<tr><td>${fmtDateShort(d.tanggal)}</td><td>${jenisBadge}</td><td class="num">${rupiah(d.nominal)}</td><td>${esc(d.keterangan)}</td><td>${statusBadge}</td><td>${actions}</td></tr>`;
+    }).join('') : '<tr class="empty-row"><td colspan="6">🧺 Belum ada catatan uang kotor. Gunakan form di atas untuk mencatat uang yang belum disetor.</td></tr>';
   }
   document.getElementById('dcTanggal').value = todayISO();
+  const dcJenisSel = document.getElementById('dcJenis'), dcSubmitBtn = document.getElementById('dcSubmitBtn');
+  dcJenisSel.addEventListener('change', ()=>{
+    dcSubmitBtn.textContent = dcJenisSel.value === 'KELUAR' ? '➖ Catat Pengeluaran' : '➕ Catat Uang Masuk';
+  });
   document.getElementById('dirtyForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
+    const jenis = dcJenisSel.value === 'KELUAR' ? 'KELUAR' : 'MASUK';
     const nominal = Math.floor(Number(document.getElementById('dcNominal').value));
     const ket = document.getElementById('dcKet').value.trim();
     if(!(nominal >= 1) || !ket){ toast('⚠️ Nominal & keterangan wajib diisi.'); return; }
-    const d = { id: uid(), tanggal: document.getElementById('dcTanggal').value || todayISO(), nominal, keterangan: ket, status:'KOTOR', dibersihkanPada:null, dibuatPada:new Date().toISOString() };
+    const tanggal = document.getElementById('dcTanggal').value || todayISO();
+    const status = jenis === 'KELUAR' ? 'SELESAI' : 'KOTOR';
+    const d = { id: uid(), tanggal, nominal, keterangan: ket, status, jenis, dibersihkanPada:null, dibuatPada:new Date().toISOString() };
     state.dirtyCash.unshift(d);
-    const { error } = await sb.from('kas_kotor').insert([{ id:d.id, tanggal:d.tanggal, nominal, keterangan:ket, status:'KOTOR', dibuat_pada:d.dibuatPada }]);
+    const { error } = await sb.from('kas_kotor').insert([{ id:d.id, tanggal, nominal, keterangan:ket, status, jenis, dibuat_pada:d.dibuatPada }]);
     if(error) console.error('insert kas_kotor failed', error);
-    e.target.reset(); document.getElementById('dcTanggal').value = todayISO();
-    renderAll(); toast('Uang kotor dicatat.');
+    e.target.reset(); document.getElementById('dcTanggal').value = todayISO(); dcSubmitBtn.textContent = '➕ Catat Uang Masuk';
+    renderAll(); toast(jenis === 'KELUAR' ? '📤 Pengeluaran uang kotor dicatat.' : '📥 Uang kotor masuk dicatat.');
+    sendDiscordDirtyCashRecap({ aksi: jenis === 'KELUAR' ? 'PENGELUARAN' : 'MASUK', nominal, keterangan:ket, tanggal });
   });
   document.getElementById('dirtyRows').addEventListener('click', async (e)=>{
     const clean = e.target.closest('[data-clean-dirty]'), del = e.target.closest('[data-del-dirty]');
@@ -2714,6 +2846,8 @@
       const { error } = await sb.from('kas_kotor').update({ status:'BERSIH', dibersihkan_pada:d.dibersihkanPada }).eq('id', d.id);
       if(error) console.error('update kas_kotor failed', error);
       renderAll(); toast('Uang kotor dibersihkan ke Kas Bersih.');
+      sendDiscordDirtyCashRecap({ aksi:'BERSIHKAN', nominal:d.nominal, keterangan:d.keterangan, tanggal:d.tanggal });
+      sendDiscordLedgerRecap({ jenis:'MASUK', sumber:'Uang Kotor Dibersihkan', nominal:d.nominal, keterangan:d.keterangan });
     } else if(del){
       if(!confirm('Hapus catatan uang kotor ini?')) return;
       state.dirtyCash = state.dirtyCash.filter(x=>x.id!==del.dataset.delDirty);
@@ -2747,6 +2881,7 @@
     row.total = row.gaji_pokok + row.tunjangan + row.bonus - row.potongan;
     if(row.total < 0){ toast('Potongan melebihi total gaji.'); return; }
     state.slips.unshift(row); await dbIns('payroll_slips', row); e.target.reset(); document.getElementById('pyPeriode').value = todayISO().slice(0,7); renderAll(); toast('Slip gaji dibuat (DRAFT).');
+    sendDiscordPayrollRecap(row, 'DRAFT');
   });
   function printSlip(x){
     const w = window.open('', '_blank'); if(!w){ toast('Izinkan pop-up untuk mencetak slip.'); return; }
@@ -2767,10 +2902,13 @@
       state.expenses.push(ex); await dbInsertExpense(ex);
       x.status = 'DIBAYAR'; x.dibayar_pada = new Date().toISOString(); await dbUpd('payroll_slips', x.id, { status:x.status, dibayar_pada:x.dibayar_pada });
       renderAll(); toast('Gaji dibayar & tercatat di Pembukuan.');
+      sendDiscordPayrollRecap(x, 'DIBAYAR');
+      sendDiscordLedgerRecap({ jenis:'KELUAR', sumber:'Penggajian', nominal:x.total, keterangan:`Gaji ${x.member_nama} — ${x.periode}` });
     }
     if(can){
       const x = find(can.dataset.slipCancel); if(!x || !confirm('Batalkan slip ini?')) return;
       x.status = 'BATAL'; await dbUpd('payroll_slips', x.id, { status:'BATAL' }); renderAll();
+      sendDiscordPayrollRecap(x, 'BATAL');
     }
   });
 
@@ -3052,6 +3190,9 @@
 
     renderAll();
     toast(`Berhasil craft ${hasilJumlah} ${resultItem.nama}, stok bahan otomatis berkurang.`);
+    sendDiscordCraftingRecap(log);
+    const lowItems = needList.map(n=>n.item).filter(it=> it.stok <= state.config.batasStok);
+    if(lowItems.length) sendDiscordLowStockAlert(lowItems);
   }
 
   document.getElementById('recipeList').addEventListener('keydown', (e)=>{
@@ -3103,6 +3244,11 @@
     document.getElementById('cWebhookSelesai').value = state.config.webhookSelesai || '';
     document.getElementById('cWebhookPengeluaran').value = state.config.webhookPengeluaran || '';
     document.getElementById('cWebhookStok').value = state.config.webhookStok || '';
+    document.getElementById('cWebhookStokGerak').value = state.config.webhookStokGerak || '';
+    document.getElementById('cWebhookCrafting').value = state.config.webhookCrafting || '';
+    document.getElementById('cWebhookPembukuan').value = state.config.webhookPembukuan || '';
+    document.getElementById('cWebhookUangKotor').value = state.config.webhookUangKotor || '';
+    document.getElementById('cWebhookPengajian').value = state.config.webhookPengajian || '';
   }
   document.getElementById('saveConfigBtn').addEventListener('click', async ()=>{
     state.config.targetBulanan = Number(document.getElementById('cTarget').value)||0;
@@ -3271,11 +3417,139 @@
       }]
     }, 'STOK');
   }
+
+  // Notifikasi barang masuk / keluar manual (di luar pesanan) dari tab Item & Stok.
+  async function sendDiscordStockMoveRecap({ tipe, lines, keterangan }){
+    const url = (state.config.webhookStokGerak||'').trim();
+    if(!url) return;
+    const masuk = tipe === 'MASUK';
+    const rincian = lines.map(l=>`• ${l.item.nama} ×${l.jumlah} (stok jadi ${l.item.stok})`).join('\n').slice(0, 1000);
+    const fields = [
+      { name: 'Jenis', value: masuk ? '📥 Barang Masuk' : '📤 Barang Keluar', inline: true },
+      { name: 'Jumlah Jenis Barang', value: String(lines.length), inline: true },
+      { name: 'Rincian', value: rincian || '-' }
+    ];
+    if(keterangan) fields.push({ name: 'Keterangan', value: keterangan.slice(0, 500) });
+    await postDiscord(url, {
+      username: 'BRANGKAS ESPORT',
+      embeds: [{
+        title: masuk ? '📥 Barang Masuk' : '📤 Barang Keluar',
+        color: masuk ? DISCORD_COLOR_OK : DISCORD_COLOR_WARN,
+        fields,
+        footer: { text: 'BRANGKAS ESPORT — Item & Stok' },
+        timestamp: new Date().toISOString()
+      }]
+    }, 'STOK_GERAK');
+  }
+
+  // Notifikasi setiap kali sebuah resep berhasil di-craft (bahan berkurang, hasil bertambah).
+  async function sendDiscordCraftingRecap(log){
+    const bahanText = (log.bahanTerpakai||[]).map(b=>`• ${b.nama} ×${b.jumlah}`).join('\n').slice(0, 1000);
+    const url = (state.config.webhookCrafting||'').trim();
+    if(!url) return;
+    const fields = [
+      { name: 'Resep', value: log.namaResep, inline: true },
+      { name: 'Hasil', value: `${log.namaHasil} ×${log.hasilJumlah}`, inline: true },
+      { name: 'Jumlah Batch', value: String(log.jumlahCraft), inline: true },
+      { name: 'Bahan Terpakai', value: bahanText || '-' }
+    ];
+    await postDiscord(url, {
+      username: 'BRANGKAS ESPORT',
+      embeds: [{
+        title: `🛠️ Crafting Selesai — ${log.namaHasil}`,
+        color: DISCORD_COLOR_INFO,
+        fields,
+        footer: { text: 'BRANGKAS ESPORT — Crafting' },
+        timestamp: new Date().toISOString()
+      }]
+    }, 'CRAFTING');
+  }
+
+  // Notifikasi umum untuk Pembukuan (Arus Kas / Kas Bersih): dipicu tiap ada transaksi
+  // yang menambah/mengurangi Kas Bersih (pesanan selesai, pengeluaran, gaji dibayar, uang kotor dibersihkan).
+  async function sendDiscordLedgerRecap({ jenis, sumber, nominal, keterangan }){
+    const url = (state.config.webhookPembukuan||'').trim();
+    if(!url) return;
+    const masuk = jenis === 'MASUK';
+    const saldoAkhir = (state.config.saldoAwal||0) + computeTotalPemasukanSelesai() + computeKasBersih() - computeTotalPengeluaran();
+    const fields = [
+      { name: 'Sumber', value: sumber, inline: true },
+      { name: 'Nominal', value: `${masuk ? '+' : '-'}${rupiah(nominal)}`, inline: true },
+      { name: 'Saldo Kas Bersih Sekarang', value: rupiah(saldoAkhir), inline: true }
+    ];
+    if(keterangan) fields.push({ name: 'Keterangan', value: String(keterangan).slice(0, 500) });
+    await postDiscord(url, {
+      username: 'BRANGKAS ESPORT',
+      embeds: [{
+        title: masuk ? '📗 Kas Masuk (Pembukuan)' : '📕 Kas Keluar (Pembukuan)',
+        color: masuk ? DISCORD_COLOR_OK : DISCORD_COLOR_WARN,
+        fields,
+        footer: { text: 'BRANGKAS ESPORT — Pembukuan · Arus Kas' },
+        timestamp: new Date().toISOString()
+      }]
+    }, 'PEMBUKUAN');
+  }
+
+  // Notifikasi khusus untuk Arus Uang Kotor: uang kotor masuk, dibersihkan, atau langsung dipakai (pengeluaran).
+  async function sendDiscordDirtyCashRecap({ aksi, nominal, keterangan, tanggal, jumlahCatatan }){
+    const url = (state.config.webhookUangKotor||'').trim();
+    if(!url) return;
+    const titleMap = { MASUK:'📥 Uang Kotor Masuk', PENGELUARAN:'📤 Pengeluaran Uang Kotor', BERSIHKAN:'🧼 Uang Kotor Dibersihkan' };
+    const colorMap = { MASUK:DISCORD_COLOR_OK, PENGELUARAN:DISCORD_COLOR_WARN, BERSIHKAN:DISCORD_COLOR_INFO };
+    const sisa = (state.config.saldoAwalKotor||0) + state.dirtyCash.reduce((s,d)=> d.jenis!=='KELUAR' ? s+d.nominal : s, 0) - computeKasBersih() - computeDirtyExpense();
+    const fields = [
+      { name: 'Nominal', value: rupiah(nominal), inline: true },
+      { name: 'Sisa Uang Kotor Sekarang', value: rupiah(sisa), inline: true }
+    ];
+    if(jumlahCatatan) fields.push({ name: 'Jumlah Catatan', value: String(jumlahCatatan), inline: true });
+    if(tanggal) fields.push({ name: 'Tanggal', value: fmtDateShort(tanggal), inline: true });
+    if(keterangan) fields.push({ name: 'Keterangan', value: String(keterangan).slice(0, 500) });
+    await postDiscord(url, {
+      username: 'BRANGKAS ESPORT',
+      embeds: [{
+        title: titleMap[aksi] || 'Arus Uang Kotor',
+        color: colorMap[aksi] || DISCORD_COLOR_INFO,
+        fields,
+        footer: { text: 'BRANGKAS ESPORT — Arus Uang Kotor' },
+        timestamp: new Date().toISOString()
+      }]
+    }, 'UANG_KOTOR');
+  }
+
+  // Notifikasi Penggajian: slip dibuat (DRAFT), dibayar, atau dibatalkan.
+  async function sendDiscordPayrollRecap(slip, aksi){
+    const url = (state.config.webhookPengajian||'').trim();
+    if(!url) return;
+    const titleMap = { DRAFT:'🧾 Slip Gaji Dibuat', DIBAYAR:'💵 Gaji Dibayar', BATAL:'✖️ Slip Gaji Dibatalkan' };
+    const colorMap = { DRAFT:DISCORD_COLOR_INFO, DIBAYAR:DISCORD_COLOR_OK, BATAL:DISCORD_COLOR_WARN };
+    const fields = [
+      { name: 'Karyawan', value: slip.member_nama, inline: true },
+      { name: 'Periode', value: slip.periode, inline: true },
+      { name: 'Total Diterima', value: rupiah(slip.total), inline: true },
+      { name: 'Status', value: aksi, inline: true }
+    ];
+    await postDiscord(url, {
+      username: 'BRANGKAS ESPORT',
+      embeds: [{
+        title: titleMap[aksi] || 'Penggajian',
+        color: colorMap[aksi] || DISCORD_COLOR_INFO,
+        fields,
+        footer: { text: 'BRANGKAS ESPORT — Penggajian' },
+        timestamp: new Date().toISOString()
+      }]
+    }, 'PENGAJIAN');
+  }
+
   const WEBHOOK_LABELS = {
     webhookPesanan: 'Pesanan Baru',
     webhookSelesai: 'Total Pemasukan (Pesanan Selesai)',
     webhookPengeluaran: 'Pengeluaran / Restock',
-    webhookStok: 'Peringatan Stok Menipis'
+    webhookStok: 'Peringatan Stok Menipis',
+    webhookStokGerak: 'Barang Masuk & Keluar',
+    webhookCrafting: 'Crafting',
+    webhookPembukuan: 'Pembukuan · Arus Kas',
+    webhookUangKotor: 'Arus Uang Kotor',
+    webhookPengajian: 'Penggajian'
   };
   document.querySelectorAll('[data-save-webhook]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
