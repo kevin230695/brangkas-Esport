@@ -1022,6 +1022,31 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="craftTestModalOverlay">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>Simulasi Craft — <em id="craftTestModalName">-</em></h3>
+      <button class="modal-close" id="craftTestModalClose" title="Tutup">✕</button>
+    </div>
+    <div class="modal-summary">
+      <span>Jumlah Craft: <b id="craftTestModalBatch">0</b></span>
+      <span>Status: <b id="craftTestModalStatus">-</b></span>
+    </div>
+    <div class="modal-body" style="padding:14px 18px;">
+      <p class="stamp" style="margin:0 0 10px;">Simulasi ini hanya menghitung kebutuhan bahan. Stok bahan &amp; hasil yang sebenarnya belum berubah sampai Anda menekan "Craft Sekarang".</p>
+      <table>
+        <thead><tr><th>Bahan</th><th class="num">Dibutuhkan</th><th class="num">Stok Sekarang</th><th class="num">Sisa Jika Di-craft</th><th>Status</th></tr></thead>
+        <tbody id="craftTestModalRows"></tbody>
+      </table>
+      <div class="recipe-hasil" style="margin-top:14px;" id="craftTestModalHasil"></div>
+    </div>
+    <div style="display:flex; gap:8px; justify-content:flex-end; padding:12px 18px; border-top:1px solid var(--border);">
+      <button type="button" class="btn ghost" id="craftTestModalCloseBtn">Tutup</button>
+      <button type="button" class="btn" id="craftTestModalCraftBtn">Craft Sekarang</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   "use strict";
@@ -3107,6 +3132,7 @@
         <div class="recipe-craft-controls">
           <input type="number" class="craft-jumlah-input" min="1" step="1" value="${keep[r.id] || 1}" data-craft-jumlah="${r.id}" title="Jumlah craft">
           <button type="button" class="btn ghost sm" data-craft-max="${r.id}" title="Isi dengan jumlah maksimal">Maks</button>
+          <button type="button" class="btn ghost sm" data-craft-test="${r.id}" title="Simulasi kebutuhan bahan tanpa mengurangi stok">Tes</button>
           <button type="button" class="btn" data-craft-recipe="${r.id}"></button>
         </div>
         <div class="recipe-card-actions">
@@ -3205,7 +3231,73 @@
       recalcRecipeCard(e.target.closest('.recipe-card'));
     }
   });
+  // ---------- Crafting: simulasi/tes (hitung kebutuhan bahan TANPA mengurangi stok sungguhan) ----------
+  let craftTestContext = null;
+  function simulateRecipe(recipe, batch){
+    const rows = (recipe.bahan || []).map(b=>{
+      const item = itemById(b.itemId);
+      const need = b.jumlah * batch;
+      const stokSekarang = item ? item.stok : 0;
+      const sisa = stokSekarang - need; // hanya dihitung, tidak ditulis ke item/DB
+      const ok = !!item && sisa >= 0;
+      return { nama: item ? item.nama : '(item dihapus)', need, stokSekarang, sisa, ok };
+    });
+    const allOk = rows.length > 0 && rows.every(row=>row.ok);
+    return { rows, allOk };
+  }
+  function openCraftTestModal(recipeId){
+    const r = state.recipes.find(x=>x.id===recipeId);
+    if(!r){ toast('Resep tidak ditemukan.'); return; }
+    const card = document.querySelector(`.recipe-card[data-recipe-id="${recipeId}"]`);
+    const batch = Math.max(1, Math.floor(Number(card ? card.querySelector('.craft-jumlah-input').value : 1) || 1));
+    const res = itemById(r.resultItemId);
+    const sim = simulateRecipe(r, batch);
+    craftTestContext = { recipeId, batch };
+
+    document.getElementById('craftTestModalName').textContent = r.nama;
+    document.getElementById('craftTestModalBatch').textContent = batch + 'x';
+    const statusEl = document.getElementById('craftTestModalStatus');
+    statusEl.textContent = !res ? 'Item hasil dihapus' : (sim.allOk ? 'Bahan cukup, siap craft' : 'Bahan tidak cukup');
+    statusEl.style.color = (res && sim.allOk) ? 'var(--green)' : 'var(--red)';
+
+    document.getElementById('craftTestModalRows').innerHTML = sim.rows.length ? sim.rows.map(row=>`
+      <tr>
+        <td>${esc(row.nama)}</td>
+        <td class="num">${row.need}</td>
+        <td class="num">${row.stokSekarang}</td>
+        <td class="num">${row.sisa}</td>
+        <td><span class="badge ${row.ok?'ok':'bad'}">${row.ok ? 'Cukup' : 'Kurang ' + (row.need - row.stokSekarang)}</span></td>
+      </tr>`).join('') : '<tr class="empty-row"><td colspan="5">Resep ini belum punya bahan.</td></tr>';
+
+    document.getElementById('craftTestModalHasil').innerHTML = res
+      ? `Hasil simulasi: <b>${esc(res.nama)}</b> akan bertambah ${r.resultJumlah * batch} (dari stok sekarang ${res.stok} menjadi ${res.stok + r.resultJumlah * batch}). <span style="color:var(--text-faint);">*Angka ini hanya perkiraan, belum tersimpan.</span>`
+      : 'Item hasil resep ini sudah dihapus dari master item.';
+
+    const craftBtn = document.getElementById('craftTestModalCraftBtn');
+    craftBtn.disabled = !sim.allOk || !res;
+    craftBtn.textContent = (res && sim.allOk) ? `Craft Sekarang → +${r.resultJumlah*batch} ${res.nama}` : 'Bahan Tidak Cukup';
+
+    document.getElementById('craftTestModalOverlay').classList.add('show');
+  }
+  function closeCraftTestModal(){
+    document.getElementById('craftTestModalOverlay').classList.remove('show');
+    craftTestContext = null;
+  }
+  document.getElementById('craftTestModalClose').addEventListener('click', closeCraftTestModal);
+  document.getElementById('craftTestModalCloseBtn').addEventListener('click', closeCraftTestModal);
+  document.getElementById('craftTestModalOverlay').addEventListener('click', (e)=>{
+    if(e.target.id === 'craftTestModalOverlay') closeCraftTestModal();
+  });
+  document.getElementById('craftTestModalCraftBtn').addEventListener('click', async ()=>{
+    if(!craftTestContext || document.getElementById('craftTestModalCraftBtn').disabled) return;
+    const { recipeId, batch } = craftTestContext;
+    closeCraftTestModal();
+    await craftRecipe(recipeId, batch);
+  });
+
   document.getElementById('recipeList').addEventListener('click', async (e)=>{
+    const testBtn = e.target.closest('[data-craft-test]');
+    if(testBtn){ openCraftTestModal(testBtn.dataset.craftTest); return; }
     const craftBtn = e.target.closest('[data-craft-recipe]');
     if(craftBtn){
       const card = craftBtn.closest('.recipe-card');
