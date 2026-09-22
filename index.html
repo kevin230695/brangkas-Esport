@@ -169,6 +169,23 @@
   .recipe-craft-controls .btn:not(.ghost):not(.sm){ flex:1; }
   .recipe-craft-controls [data-craft-recipe]{ flex:1; }
   .recipe-empty{ padding:28px; text-align:center; color:var(--text-faint); }
+  .sim-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px; margin:14px 0 22px; }
+  .sim-card{ background:var(--panel); border:1px solid var(--border); border-radius:var(--r); padding:14px 16px; transition:border-color .15s; }
+  .sim-card.has-plan{ border-color:var(--border-hi); }
+  .sim-card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .sim-card-top .nm{ font-weight:600; font-size:14px; }
+  .sim-bar-track{ height:6px; border-radius:4px; background:var(--bg-alt); overflow:hidden; margin-top:10px; }
+  .sim-bar-fill{ height:100%; border-radius:4px; background:var(--brass); transition:width .2s; }
+  .sim-stepper{ display:flex; align-items:center; gap:6px; margin-top:12px; }
+  .sim-stepper button{ font:inherit; width:28px; height:28px; flex:0 0 auto; border-radius:7px; border:1px solid var(--border-hi); background:var(--panel-2); color:var(--text); cursor:pointer; font-size:16px; line-height:1; }
+  .sim-stepper button:hover{ border-color:var(--brass); color:var(--brass); }
+  .sim-stepper input{ width:54px; text-align:center; flex:0 0 auto; }
+  .sim-stepper .sim-maxfill{ margin-left:auto; }
+  .sim-bahan-row{ padding:11px 0; border-bottom:1px solid var(--border); }
+  .sim-bahan-row:last-child{ border-bottom:0; }
+  .sim-bahan-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:13.5px; }
+  .sim-bahan-head .nm{ font-weight:500; }
+  .sim-empty-box{ padding:24px; text-align:center; color:var(--text-faint); font-size:13px; }
 
   /* Tables */
   .table-wrap{ background:var(--panel); border:1px solid var(--border); border-radius:var(--r); overflow-x:auto; margin-bottom:8px; }
@@ -554,28 +571,32 @@
     </div>
 
     <div id="craftPaneSimulasi" hidden>
-      <p class="stamp" style="margin:0 0 12px;">Rencanakan beberapa resep dengan item hasil berbeda sekaligus untuk melihat sampai berapa banyak masing-masing bisa dibuat, termasuk kalau bahannya saling berbagi stok yang sama. Semua di sini hanya simulasi — stok belum berubah sampai Anda menekan "Craft Semua Sesuai Rencana".</p>
+      <div class="cashflow-grid-4">
+        <div class="kpi-card"><div class="kpi-label">Resep direncanakan</div><div class="kpi-value" id="simKpiPlanned">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total unit direncanakan</div><div class="kpi-value" id="simKpiUnits">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Bahan jadi bottleneck</div><div class="kpi-value" style="color:var(--red);" id="simKpiBottleneck">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Status rencana</div><div class="kpi-value" id="simKpiStatus" style="font-size:16px;">Belum ada rencana</div></div>
+      </div>
+      <p class="stamp" style="margin:0 0 12px;">Atur rencana jumlah tiap resep pakai tombol − / + atau ketik langsung, lalu bandingkan dengan item lain. Ini murni simulasi, stok baru benar-benar berubah kalau Anda menekan "Craft Semua Sesuai Rencana" di paling bawah.</p>
       <div class="filter-bar" style="grid-template-columns:2fr auto auto;">
         <div class="field"><label>Cari resep</label><input type="search" id="simSearch" placeholder="Ketik nama resep atau item..."></div>
-        <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" id="simFillMaxBtn">Isi maks (independen)</button></div>
-        <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" id="simResetBtn">Reset semua ke 0</button></div>
+        <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" id="simFillMaxBtn">⚡ Isi maks (independen)</button></div>
+        <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" id="simResetBtn">↺ Reset semua</button></div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Resep</th><th>Item Hasil</th><th class="num">Maks Independen</th><th class="num">Rencana Jumlah</th><th>Status Gabungan</th></tr></thead>
-          <tbody id="simRecipeRows"></tbody>
-        </table>
+
+      <div class="sim-grid" id="simRecipeGrid"></div>
+
+      <div class="panel" style="padding:16px 18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+          <h3 style="margin:0; font-size:15px;">Kebutuhan Bahan Gabungan</h3>
+          <span class="stamp" style="margin:0;" id="simBahanCount"></span>
+        </div>
+        <p class="stamp" style="margin:4px 0 12px;">Diurutkan dari yang paling kritis dulu — bahan bertanda ⚠️ merah adalah bottleneck rencana Anda saat ini.</p>
+        <div id="simBahanList"></div>
       </div>
-      <h3 style="margin:22px 0 8px;font-size:15px;">Kebutuhan Bahan Gabungan</h3>
-      <p class="stamp" style="margin:0 0 10px;">Total bahan yang dibutuhkan kalau semua rencana di atas di-craft bersamaan, dibandingkan stok yang ada sekarang.</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Bahan</th><th class="num">Total Dibutuhkan</th><th class="num">Stok Sekarang</th><th class="num">Sisa</th><th>Status</th></tr></thead>
-          <tbody id="simBahanRows"></tbody>
-        </table>
-      </div>
-      <div class="recipe-craft-controls" style="margin-top:16px;max-width:360px;">
-        <button type="button" class="btn" id="simCraftAllBtn">Craft Semua Sesuai Rencana</button>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+        <button type="button" class="btn" id="simCraftAllBtn" style="min-width:260px;">Craft Semua Sesuai Rencana</button>
       </div>
     </div>
   </section>
@@ -3239,8 +3260,8 @@
   // ---------- Crafting: simulasi maksimal multi-resep (bahan berbeda, tanpa mengurangi stok) ----------
   let simPlan = {}; // recipeId -> rencana jumlah craft (hanya di memori, bukan stok sungguhan)
   function renderSimPane(){
-    const wrap = document.getElementById('simRecipeRows');
-    if(!wrap) return;
+    const grid = document.getElementById('simRecipeGrid');
+    if(!grid) return;
     const ae = document.activeElement;
     if(ae && ae.classList && ae.classList.contains('sim-plan-input')){ recalcSimulation(); return; }
 
@@ -3251,19 +3272,26 @@
       return !q || hay.includes(q);
     });
     if(!list.length){
-      wrap.innerHTML = `<tr class="empty-row"><td colspan="5">${state.recipes.length ? 'Tidak ada resep yang cocok dengan pencarian.' : 'Belum ada resep crafting.'}</td></tr>`;
+      grid.innerHTML = `<div class="sim-empty-box" style="grid-column:1/-1;">${state.recipes.length ? 'Tidak ada resep yang cocok dengan pencarian.' : 'Belum ada resep crafting. Buat resep dulu di tab "Resep & Craft".'}</div>`;
     } else {
-      wrap.innerHTML = list.map(r=>{
+      grid.innerHTML = list.map(r=>{
         const res = itemById(r.resultItemId);
         const maxInd = recipeMaxCraft(r);
         const plan = simPlan[r.id] || 0;
-        return `<tr data-sim-recipe="${r.id}">
-          <td>${esc(r.nama)}</td>
-          <td>${res ? esc(res.nama) : '(item dihapus)'}</td>
-          <td class="num">${maxInd}</td>
-          <td class="num"><input type="number" class="sim-plan-input" min="0" step="1" value="${plan}" data-sim-plan="${r.id}" style="width:76px;text-align:right;"></td>
-          <td><span class="badge sim-recipe-status"></span></td>
-        </tr>`;
+        return `<div class="sim-card${plan>0 ? ' has-plan':''}" data-sim-recipe="${r.id}" data-sim-max="${maxInd}">
+          <div class="sim-card-top">
+            <div><div class="nm">${esc(r.nama)}</div><div class="stamp" style="margin:2px 0 0;">→ ${res ? esc(res.nama) : '(item dihapus)'}</div></div>
+            <span class="badge sim-recipe-status">—</span>
+          </div>
+          <div class="sim-bar-track"><div class="sim-bar-fill" style="width:0%"></div></div>
+          <div class="stamp sim-max-label" style="margin-top:6px;">Maks independen: ${maxInd}x</div>
+          <div class="sim-stepper">
+            <button type="button" data-sim-dec="${r.id}" title="Kurangi">−</button>
+            <input type="number" class="sim-plan-input" min="0" step="1" value="${plan}" data-sim-plan="${r.id}">
+            <button type="button" data-sim-inc="${r.id}" title="Tambah">+</button>
+            <button type="button" class="btn ghost sm sim-maxfill" data-sim-max-fill="${r.id}">Maks</button>
+          </div>
+        </div>`;
       }).join('');
     }
     recalcSimulation();
@@ -3279,49 +3307,91 @@
         bahanTotal[b.itemId].need += b.jumlah * plan;
       });
     });
-    document.querySelectorAll('#simRecipeRows tr[data-sim-recipe]').forEach(row=>{
-      const r = state.recipes.find(x=>x.id===row.dataset.simRecipe);
-      const plan = simPlan[row.dataset.simRecipe] || 0;
-      const badge = row.querySelector('.sim-recipe-status');
-      if(!r || plan <= 0){ badge.textContent = '—'; badge.className = 'badge sim-recipe-status'; return; }
+
+    document.querySelectorAll('#simRecipeGrid .sim-card[data-sim-recipe]').forEach(card=>{
+      const r = state.recipes.find(x=>x.id===card.dataset.simRecipe);
+      const plan = simPlan[card.dataset.simRecipe] || 0;
+      const maxInd = Number(card.dataset.simMax) || 0;
+      const badge = card.querySelector('.sim-recipe-status');
+      const bar = card.querySelector('.sim-bar-fill');
+      card.classList.toggle('has-plan', plan > 0);
+      if(!r || plan <= 0){
+        badge.textContent = '—'; badge.className = 'badge sim-recipe-status';
+        bar.style.width = '0%'; bar.style.background = 'var(--brass)';
+        return;
+      }
       const ok = (r.bahan || []).every(b=>{ const t = bahanTotal[b.itemId]; return t && t.need <= t.stok; });
-      badge.textContent = ok ? 'Cukup' : 'Bahan kurang (gabungan)';
+      badge.textContent = ok ? 'Cukup' : 'Kurang (gabungan)';
       badge.className = 'badge sim-recipe-status ' + (ok ? 'ok' : 'bad');
+      const overOwnMax = maxInd > 0 ? plan > maxInd : plan > 0;
+      const pct = maxInd > 0 ? Math.min(100, (plan / maxInd) * 100) : 100;
+      bar.style.width = pct + '%';
+      bar.style.background = !ok || overOwnMax ? 'var(--red)' : 'var(--green)';
     });
 
-    const bahanWrap = document.getElementById('simBahanRows');
-    const keys = Object.keys(bahanTotal);
-    if(!keys.length){
-      bahanWrap.innerHTML = '<tr class="empty-row"><td colspan="5">Isi rencana jumlah di tabel atas untuk melihat kebutuhan bahan gabungan.</td></tr>';
+    const bahanWrap = document.getElementById('simBahanList');
+    const entries = Object.values(bahanTotal).map(t=>({ ...t, sisa: t.stok - t.need, ok: t.stok - t.need >= 0 }));
+    entries.sort((a,b)=> a.sisa - b.sisa);
+    document.getElementById('simBahanCount').textContent = entries.length ? `${entries.length} jenis bahan terpakai` : '';
+    if(!entries.length){
+      bahanWrap.innerHTML = '<div class="sim-empty-box">Belum ada rencana. Isi jumlah di kartu resep di atas untuk melihat kebutuhan bahan gabungan di sini.</div>';
     } else {
-      bahanWrap.innerHTML = keys.map(k=>{
-        const t = bahanTotal[k], sisa = t.stok - t.need, ok = sisa >= 0;
-        return `<tr>
-          <td>${esc(t.nama)}</td>
-          <td class="num">${t.need}</td>
-          <td class="num">${t.stok}</td>
-          <td class="num">${sisa}</td>
-          <td><span class="badge ${ok?'ok':'bad'}">${ok ? 'Cukup' : 'Kurang ' + Math.abs(sisa)}</span></td>
-        </tr>`;
+      bahanWrap.innerHTML = entries.map(t=>{
+        const pct = t.stok > 0 ? Math.min(100, (t.need / t.stok) * 100) : (t.need > 0 ? 100 : 0);
+        return `<div class="sim-bahan-row">
+          <div class="sim-bahan-head">
+            <span class="nm">${t.ok ? '' : '⚠️ '}${esc(t.nama)}</span>
+            <span class="badge ${t.ok?'ok':'bad'}">${t.ok ? 'Cukup' : 'Kurang ' + Math.abs(t.sisa)}</span>
+          </div>
+          <div class="stamp" style="margin:4px 0 0;">Butuh ${t.need} · Stok ${t.stok} · Sisa ${t.sisa}</div>
+          <div class="sim-bar-track"><div class="sim-bar-fill" style="width:${pct}%; background:${t.ok ? 'var(--green)' : 'var(--red)'}"></div></div>
+        </div>`;
       }).join('');
     }
-    const anyPlanned = Object.values(simPlan).some(v=>v>0);
-    const allOk = keys.every(k=> bahanTotal[k].stok >= bahanTotal[k].need);
+
+    const plannedRecipes = Object.entries(simPlan).filter(([,v])=>v>0);
+    const totalUnits = plannedRecipes.reduce((a,[,v])=>a+v, 0);
+    const bottleneck = entries.filter(t=>!t.ok).length;
+    const allOk = entries.every(t=>t.ok);
+    document.getElementById('simKpiPlanned').textContent = plannedRecipes.length;
+    document.getElementById('simKpiUnits').textContent = totalUnits;
+    document.getElementById('simKpiBottleneck').textContent = bottleneck;
+    const statusEl = document.getElementById('simKpiStatus');
+    if(!plannedRecipes.length){ statusEl.textContent = 'Belum ada rencana'; statusEl.style.color = 'var(--text-faint)'; }
+    else if(allOk){ statusEl.textContent = 'Semua bahan cukup'; statusEl.style.color = 'var(--green)'; }
+    else { statusEl.textContent = 'Ada bahan kurang'; statusEl.style.color = 'var(--red)'; }
+
     const craftAllBtn = document.getElementById('simCraftAllBtn');
-    craftAllBtn.disabled = !anyPlanned || !allOk;
-    craftAllBtn.textContent = anyPlanned ? `Craft Semua Sesuai Rencana (${Object.values(simPlan).filter(v=>v>0).length} resep)` : 'Craft Semua Sesuai Rencana';
+    craftAllBtn.disabled = !plannedRecipes.length || !allOk;
+    craftAllBtn.textContent = plannedRecipes.length ? `Craft Semua Sesuai Rencana (${plannedRecipes.length} resep · ${totalUnits}x)` : 'Craft Semua Sesuai Rencana';
   }
   document.getElementById('simSearch').addEventListener('input', renderSimPane);
   document.getElementById('simFillMaxBtn').addEventListener('click', ()=>{
     state.recipes.forEach(r=>{ simPlan[r.id] = recipeMaxCraft(r); });
     renderSimPane();
-    toast('Diisi dengan maksimal independen tiap resep. Cek "Kebutuhan Bahan Gabungan" — kalau ada bahan yang dipakai bareng beberapa resep, jumlah sungguhan yang bisa jadi bisa lebih kecil dari ini.');
+    toast('Diisi dengan maksimal independen tiap resep. Kalau ada bahan yang dipakai bareng beberapa resep, jumlah sungguhan yang bisa jadi bisa lebih kecil — cek bagian "Kebutuhan Bahan Gabungan".');
   });
   document.getElementById('simResetBtn').addEventListener('click', ()=>{ simPlan = {}; renderSimPane(); });
-  document.getElementById('simRecipeRows').addEventListener('input', (e)=>{
+  document.getElementById('simRecipeGrid').addEventListener('input', (e)=>{
     if(e.target.classList.contains('sim-plan-input')){
       simPlan[e.target.dataset.simPlan] = Math.max(0, Math.floor(Number(e.target.value) || 0));
       recalcSimulation();
+    }
+  });
+  document.getElementById('simRecipeGrid').addEventListener('click', (e)=>{
+    const decBtn = e.target.closest('[data-sim-dec]'), incBtn = e.target.closest('[data-sim-inc]'), fillBtn = e.target.closest('[data-sim-max-fill]');
+    if(decBtn){
+      const id = decBtn.dataset.simDec, card = decBtn.closest('.sim-card'), inp = card.querySelector('.sim-plan-input');
+      simPlan[id] = Math.max(0, (simPlan[id] || 0) - 1);
+      inp.value = simPlan[id]; card.classList.toggle('has-plan', simPlan[id] > 0); recalcSimulation();
+    } else if(incBtn){
+      const id = incBtn.dataset.simInc, card = incBtn.closest('.sim-card'), inp = card.querySelector('.sim-plan-input');
+      simPlan[id] = (simPlan[id] || 0) + 1;
+      inp.value = simPlan[id]; card.classList.add('has-plan'); recalcSimulation();
+    } else if(fillBtn){
+      const id = fillBtn.dataset.simMaxFill, r = state.recipes.find(x=>x.id===id), card = fillBtn.closest('.sim-card'), inp = card.querySelector('.sim-plan-input');
+      simPlan[id] = r ? recipeMaxCraft(r) : 0;
+      inp.value = simPlan[id]; card.classList.toggle('has-plan', simPlan[id] > 0); recalcSimulation();
     }
   });
   document.getElementById('simCraftAllBtn').addEventListener('click', async ()=>{
