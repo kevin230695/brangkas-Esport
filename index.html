@@ -498,6 +498,7 @@
     <div class="seg" id="craftTabs">
       <button type="button" class="seg-btn active" data-cpane="recipes">Resep &amp; Craft</button>
       <button type="button" class="seg-btn" data-cpane="log">Riwayat Crafting</button>
+      <button type="button" class="seg-btn" data-cpane="simulasi">Simulasi Maksimal</button>
     </div>
 
     <div id="craftPaneRecipes">
@@ -545,11 +546,37 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Waktu</th><th>Resep</th><th>Hasil</th><th class="num">Jumlah craft</th><th class="num">Total hasil</th><th>Bahan terpakai</th></tr></thead>
+          <thead><tr><th>Waktu</th><th>Resep</th><th>Hasil</th><th class="num">Jumlah craft</th><th class="num">Total hasil</th><th>Bahan terpakai</th><th>Aksi</th></tr></thead>
           <tbody id="craftLogRows"></tbody>
         </table>
       </div>
       <div style="margin:-6px 0 8px;"><button type="button" class="btn ghost sm" id="craftMoreBtn" hidden></button></div>
+    </div>
+
+    <div id="craftPaneSimulasi" hidden>
+      <p class="stamp" style="margin:0 0 12px;">Rencanakan beberapa resep dengan item hasil berbeda sekaligus untuk melihat sampai berapa banyak masing-masing bisa dibuat, termasuk kalau bahannya saling berbagi stok yang sama. Semua di sini hanya simulasi — stok belum berubah sampai Anda menekan "Craft Semua Sesuai Rencana".</p>
+      <div class="filter-bar" style="grid-template-columns:2fr auto auto;">
+        <div class="field"><label>Cari resep</label><input type="search" id="simSearch" placeholder="Ketik nama resep atau item..."></div>
+        <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" id="simFillMaxBtn">Isi maks (independen)</button></div>
+        <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" id="simResetBtn">Reset semua ke 0</button></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Resep</th><th>Item Hasil</th><th class="num">Maks Independen</th><th class="num">Rencana Jumlah</th><th>Status Gabungan</th></tr></thead>
+          <tbody id="simRecipeRows"></tbody>
+        </table>
+      </div>
+      <h3 style="margin:22px 0 8px;font-size:15px;">Kebutuhan Bahan Gabungan</h3>
+      <p class="stamp" style="margin:0 0 10px;">Total bahan yang dibutuhkan kalau semua rencana di atas di-craft bersamaan, dibandingkan stok yang ada sekarang.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Bahan</th><th class="num">Total Dibutuhkan</th><th class="num">Stok Sekarang</th><th class="num">Sisa</th><th>Status</th></tr></thead>
+          <tbody id="simBahanRows"></tbody>
+        </table>
+      </div>
+      <div class="recipe-craft-controls" style="margin-top:16px;max-width:360px;">
+        <button type="button" class="btn" id="simCraftAllBtn">Craft Semua Sesuai Rencana</button>
+      </div>
     </div>
   </section>
 
@@ -1330,6 +1357,10 @@
       nama_hasil:l.namaHasil, jumlah_craft:l.jumlahCraft, hasil_jumlah:l.hasilJumlah, bahan_terpakai:l.bahanTerpakai
     }]);
     if(error) console.error('insert crafting log failed', error);
+  }
+  async function dbDeleteCraftLog(id){
+    const { error } = await sb.from('crafting_log').delete().eq('id', id);
+    if(error) console.error('delete crafting log failed', error);
   }
   async function dbSaveConfig(cfg){
     await Promise.all([
@@ -2380,6 +2411,7 @@
     renderItems();
     renderRecipes();
     renderCraftLog();
+    renderSimPane();
     renderExpenses();
     renderPembukuan();
     renderStockMoves();
@@ -3001,6 +3033,8 @@
     document.querySelectorAll('#craftTabs .seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.cpane===name));
     document.getElementById('craftPaneRecipes').hidden = name !== 'recipes';
     document.getElementById('craftPaneLog').hidden = name !== 'log';
+    document.getElementById('craftPaneSimulasi').hidden = name !== 'simulasi';
+    if(name === 'simulasi') renderSimPane();
   }
   document.getElementById('craftTabs').addEventListener('click', e=>{ const b = e.target.closest('.seg-btn'); if(b) setCraftPane(b.dataset.cpane); });
   function startEditRecipe(id){
@@ -3149,7 +3183,7 @@
   function renderCraftLog(){
     const tbody = document.getElementById('craftLogRows'), btn = document.getElementById('craftMoreBtn');
     if(!state.craftingLogs.length){
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Belum ada riwayat crafting.</td></tr>'; btn.hidden = true; return;
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Belum ada riwayat crafting.</td></tr>'; btn.hidden = true; return;
     }
     const fSel = document.getElementById('cLogFilter'), curF = fSel.value;
     const names = [...new Set(state.craftingLogs.map(l=>l.namaResep))].sort((a,b)=>a.localeCompare(b,'id'));
@@ -3167,12 +3201,137 @@
         <td class="num">${l.jumlahCraft}</td>
         <td class="num">${l.hasilJumlah}</td>
         <td>${bahanText || '-'}</td>
+        <td><button type="button" class="icon-btn" data-undo-craft="${l.id}" title="Hapus riwayat ini &amp; kembalikan stok bahan/hasil">↩</button></td>
       </tr>`;
     }).join('');
     btn.hidden = sorted.length <= LIMIT;
     btn.textContent = craftShowAll ? 'Tampilkan lebih sedikit' : `Tampilkan semua (${sorted.length} catatan)`;
   }
+  async function undoCraftLog(logId){
+    const log = state.craftingLogs.find(l=>l.id===logId);
+    if(!log){ toast('Riwayat crafting tidak ditemukan.'); return; }
+    const resultItem = itemById(log.resultItemId);
+    const detailBahan = (log.bahanTerpakai||[]).map(b=>`${b.nama} +${b.jumlah}`).join(', ') || '-';
+    const detailHasil = resultItem ? `${resultItem.nama} -${log.hasilJumlah}` : '(item hasil sudah dihapus)';
+    if(!confirm(`Hapus riwayat craft "${log.namaResep}" (${fmtDateTime(log.dibuatPada)})?\n\nBahan akan dikembalikan: ${detailBahan}\nHasil akan dikurangi: ${detailHasil}\n\nTindakan ini tidak bisa dibatalkan.`)) return;
+
+    for(const b of (log.bahanTerpakai||[])){
+      const item = itemById(b.itemId);
+      if(item){ item.stok += Number(b.jumlah || 0); await dbUpdateItemStok(item.id, item.stok); }
+    }
+    if(resultItem){
+      resultItem.stok = Math.max(0, resultItem.stok - Number(log.hasilJumlah || 0));
+      await dbUpdateItemStok(resultItem.id, resultItem.stok);
+    }
+
+    state.craftingLogs = state.craftingLogs.filter(l=>l.id!==logId);
+    await dbDeleteCraftLog(logId);
+
+    renderAll();
+    toast('Riwayat crafting dihapus, stok bahan & hasil sudah dikembalikan.');
+  }
+  document.getElementById('craftLogRows').addEventListener('click', (e)=>{
+    const undoBtn = e.target.closest('[data-undo-craft]');
+    if(undoBtn) undoCraftLog(undoBtn.dataset.undoCraft);
+  });
   document.getElementById('cLogFilter').addEventListener('input', renderCraftLog);
+
+  // ---------- Crafting: simulasi maksimal multi-resep (bahan berbeda, tanpa mengurangi stok) ----------
+  let simPlan = {}; // recipeId -> rencana jumlah craft (hanya di memori, bukan stok sungguhan)
+  function renderSimPane(){
+    const wrap = document.getElementById('simRecipeRows');
+    if(!wrap) return;
+    const ae = document.activeElement;
+    if(ae && ae.classList && ae.classList.contains('sim-plan-input')){ recalcSimulation(); return; }
+
+    const q = document.getElementById('simSearch').value.trim().toLowerCase();
+    const list = state.recipes.filter(r=>{
+      const res = itemById(r.resultItemId);
+      const hay = (r.nama + ' ' + (res ? res.nama : '')).toLowerCase();
+      return !q || hay.includes(q);
+    });
+    if(!list.length){
+      wrap.innerHTML = `<tr class="empty-row"><td colspan="5">${state.recipes.length ? 'Tidak ada resep yang cocok dengan pencarian.' : 'Belum ada resep crafting.'}</td></tr>`;
+    } else {
+      wrap.innerHTML = list.map(r=>{
+        const res = itemById(r.resultItemId);
+        const maxInd = recipeMaxCraft(r);
+        const plan = simPlan[r.id] || 0;
+        return `<tr data-sim-recipe="${r.id}">
+          <td>${esc(r.nama)}</td>
+          <td>${res ? esc(res.nama) : '(item dihapus)'}</td>
+          <td class="num">${maxInd}</td>
+          <td class="num"><input type="number" class="sim-plan-input" min="0" step="1" value="${plan}" data-sim-plan="${r.id}" style="width:76px;text-align:right;"></td>
+          <td><span class="badge sim-recipe-status"></span></td>
+        </tr>`;
+      }).join('');
+    }
+    recalcSimulation();
+  }
+  function recalcSimulation(){
+    const bahanTotal = {}; // itemId -> { nama, need, stok }
+    state.recipes.forEach(r=>{
+      const plan = simPlan[r.id] || 0;
+      if(plan <= 0) return;
+      (r.bahan || []).forEach(b=>{
+        const item = itemById(b.itemId);
+        if(!bahanTotal[b.itemId]) bahanTotal[b.itemId] = { nama: item ? item.nama : '(item dihapus)', need: 0, stok: item ? item.stok : 0 };
+        bahanTotal[b.itemId].need += b.jumlah * plan;
+      });
+    });
+    document.querySelectorAll('#simRecipeRows tr[data-sim-recipe]').forEach(row=>{
+      const r = state.recipes.find(x=>x.id===row.dataset.simRecipe);
+      const plan = simPlan[row.dataset.simRecipe] || 0;
+      const badge = row.querySelector('.sim-recipe-status');
+      if(!r || plan <= 0){ badge.textContent = '—'; badge.className = 'badge sim-recipe-status'; return; }
+      const ok = (r.bahan || []).every(b=>{ const t = bahanTotal[b.itemId]; return t && t.need <= t.stok; });
+      badge.textContent = ok ? 'Cukup' : 'Bahan kurang (gabungan)';
+      badge.className = 'badge sim-recipe-status ' + (ok ? 'ok' : 'bad');
+    });
+
+    const bahanWrap = document.getElementById('simBahanRows');
+    const keys = Object.keys(bahanTotal);
+    if(!keys.length){
+      bahanWrap.innerHTML = '<tr class="empty-row"><td colspan="5">Isi rencana jumlah di tabel atas untuk melihat kebutuhan bahan gabungan.</td></tr>';
+    } else {
+      bahanWrap.innerHTML = keys.map(k=>{
+        const t = bahanTotal[k], sisa = t.stok - t.need, ok = sisa >= 0;
+        return `<tr>
+          <td>${esc(t.nama)}</td>
+          <td class="num">${t.need}</td>
+          <td class="num">${t.stok}</td>
+          <td class="num">${sisa}</td>
+          <td><span class="badge ${ok?'ok':'bad'}">${ok ? 'Cukup' : 'Kurang ' + Math.abs(sisa)}</span></td>
+        </tr>`;
+      }).join('');
+    }
+    const anyPlanned = Object.values(simPlan).some(v=>v>0);
+    const allOk = keys.every(k=> bahanTotal[k].stok >= bahanTotal[k].need);
+    const craftAllBtn = document.getElementById('simCraftAllBtn');
+    craftAllBtn.disabled = !anyPlanned || !allOk;
+    craftAllBtn.textContent = anyPlanned ? `Craft Semua Sesuai Rencana (${Object.values(simPlan).filter(v=>v>0).length} resep)` : 'Craft Semua Sesuai Rencana';
+  }
+  document.getElementById('simSearch').addEventListener('input', renderSimPane);
+  document.getElementById('simFillMaxBtn').addEventListener('click', ()=>{
+    state.recipes.forEach(r=>{ simPlan[r.id] = recipeMaxCraft(r); });
+    renderSimPane();
+    toast('Diisi dengan maksimal independen tiap resep. Cek "Kebutuhan Bahan Gabungan" — kalau ada bahan yang dipakai bareng beberapa resep, jumlah sungguhan yang bisa jadi bisa lebih kecil dari ini.');
+  });
+  document.getElementById('simResetBtn').addEventListener('click', ()=>{ simPlan = {}; renderSimPane(); });
+  document.getElementById('simRecipeRows').addEventListener('input', (e)=>{
+    if(e.target.classList.contains('sim-plan-input')){
+      simPlan[e.target.dataset.simPlan] = Math.max(0, Math.floor(Number(e.target.value) || 0));
+      recalcSimulation();
+    }
+  });
+  document.getElementById('simCraftAllBtn').addEventListener('click', async ()=>{
+    const entries = Object.entries(simPlan).filter(([,v])=>v>0);
+    if(!entries.length){ toast('Belum ada rencana jumlah craft.'); return; }
+    if(!confirm(`Craft ${entries.length} resep sesuai rencana sekarang? Stok bahan & hasil akan benar-benar berubah, bukan simulasi lagi.`)) return;
+    for(const [rid, batch] of entries){ await craftRecipe(rid, batch); }
+    simPlan = {};
+    renderSimPane();
+  });
   document.getElementById('craftMoreBtn').addEventListener('click', ()=>{ craftShowAll = !craftShowAll; renderCraftLog(); });
 
   async function craftRecipe(recipeId, batch){
