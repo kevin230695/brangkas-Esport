@@ -75,7 +75,7 @@
   .kpi-grid,.cashflow-grid-4{ grid-template-columns:repeat(4,1fr); } .kpi-grid-3,.cashflow-grid{ grid-template-columns:repeat(3,1fr); } .cashflow-grid-5{ grid-template-columns:repeat(5,1fr); }
   @media(max-width:900px){ .kpi-grid,.cashflow-grid-4{ grid-template-columns:repeat(2,1fr); } .kpi-grid-3,.cashflow-grid{ grid-template-columns:1fr; } .cashflow-grid-5{ grid-template-columns:repeat(3,1fr); } }
   @media(max-width:520px){ .kpi-grid,.cashflow-grid-4,.cashflow-grid-5{ grid-template-columns:1fr; } }
-  .kpi-card,.panel,.config-card,.order-form,.item-form,.filter-bar,.expense-form,.setup-card,.modal-card,.money-pane{ background:var(--panel); border:1px solid var(--border); border-radius:var(--r); }
+  .kpi-card,.panel,.config-card,.order-form,.item-form,.filter-bar,.expense-form,.setup-card,.modal-card{ background:var(--panel); border:1px solid var(--border); border-radius:var(--r); }
   .kpi-card{ padding:14px 16px; }
   .kpi-label{ font-size:13px; color:var(--text-faint); }
   .kpi-value{ font-size:22px; font-weight:600; margin-top:4px; }
@@ -87,15 +87,6 @@
   .info-box .info-icon{ flex:0 0 auto; font-size:15px; line-height:1.3; }
   .info-box b{ color:var(--text); }
   .info-box.warn{ background:rgba(255,217,74,.08); border-color:color-mix(in srgb,var(--gold) 45%,var(--border-hi)); }
-  .money-pane{ padding:18px; margin-top:2px; border-left-width:4px; border-left-style:solid; }
-  .money-pane.clean{ border-left-color:var(--green); }
-  .money-pane.dirty{ border-left-color:var(--red); }
-  .money-pane-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-  .money-pane-head h3{ margin:0; font-size:17px; display:flex; align-items:center; gap:9px; letter-spacing:.01em; }
-  .money-tag{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:4px 11px; border-radius:999px; white-space:nowrap; }
-  .money-tag.clean{ background:rgba(46,204,113,.14); color:var(--green); border:1px solid rgba(46,204,113,.35); }
-  .money-tag.dirty{ background:rgba(255,90,90,.14); color:var(--red); border:1px solid rgba(255,90,90,.35); }
-  .info-box.dirty{ background:rgba(255,90,90,.07); border-color:rgba(255,90,90,.3); }
   .dash-grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:12px; }
   @media(max-width:900px){ .dash-grid{ grid-template-columns:1fr; } }
   .panel{ padding:16px; }
@@ -193,7 +184,6 @@
   .badge,.ledger-badge,.status-select{ display:inline-block; font:inherit; font-size:12px; font-weight:500; padding:2px 8px; border:1px solid currentColor; border-radius:10px; background:color-mix(in srgb,currentColor 12%,var(--panel)); }
   .badge.ok,.badge.full,.status-select.ok,.ledger-badge.masuk{ color:var(--green); }
   .badge.bad,.badge.low,.status-select.bad,.ledger-badge.keluar{ color:var(--red); }
-  .ledger-badge.dicuci{ color:var(--gold); }
   .badge.mid,.status-select.mid{ color:var(--gold); }
   .status-select{ width:auto; cursor:pointer; padding:2px 8px; appearance:none; -webkit-appearance:none; -moz-appearance:none; }
   .icon-btn{ width:26px; height:26px; line-height:1; font-size:13px; background:var(--panel); color:var(--text-dim); border:1px solid var(--border-hi); border-radius:var(--r); cursor:pointer; }
@@ -301,26 +291,26 @@
       <div class="kpi-card"><div class="kpi-label">Total Pemesan</div><div class="kpi-value" id="kpiTotalPemesan">0</div></div>
     </div>
 
-    <div class="sub-head">💵 Cash</div>
+    <div class="sub-head">Kas</div>
     <div class="cashflow-grid-4">
       <div class="kpi-card"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="dashSaldoAwal">Rp0</div></div>
       <div class="kpi-card"><div class="kpi-label">Total Pemasukan</div><div class="kpi-value" style="color:var(--green);" id="dashPemasukan">Rp0</div></div>
       <div class="kpi-card"><div class="kpi-label">Total Pengeluaran</div><div class="kpi-value" style="color:var(--red);" id="dashPengeluaran">Rp0</div></div>
-      <div class="kpi-card"><div class="kpi-label">Saldo Cash Saat Ini</div><div class="kpi-value brass" id="dashArusKas">Rp0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Saldo Kas Saat Ini</div><div class="kpi-value brass" id="dashArusKas">Rp0</div></div>
     </div>
     <div class="stamp" style="color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px; margin:-10px 0 22px;">
-      Saldo Cash Saat Ini = Saldo Awal + Total Pemasukan − Total Pengeluaran. Pemasukan hanya dihitung dari pesanan berstatus SELESAI dan Dirty Money yang sudah dicuci.
+      Saldo Kas Saat Ini = Saldo Awal + Total Pemasukan − Total Pengeluaran. Pemasukan hanya dihitung dari pesanan berstatus SELESAI dan uang kotor yang sudah dibersihkan.
     </div>
 
-    <div class="sub-head">🕶️ Dirty Money <span style="font-weight:400;color:var(--text-faint);font-size:12px;">(belum dicuci)</span></div>
+    <div class="sub-head">🧺 Kas Kotor <span style="font-weight:400;color:var(--text-faint);font-size:12px;">(belum disetor)</span></div>
     <div class="cashflow-grid-4">
-      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🏦</div><div class="kpi-body"><div class="kpi-label">Saldo Awal Dirty Money</div><div class="kpi-value" id="dashKotorAwal">Rp0</div></div></div>
-      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Total Dirty Money Masuk</div><div class="kpi-value green" id="dashKotorMasuk">Rp0</div></div></div>
-      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📤</div><div class="kpi-body"><div class="kpi-label">Total Dicuci + Dipakai</div><div class="kpi-value red" id="dashKotorKeluar">Rp0</div></div></div>
-      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">⏳</div><div class="kpi-body"><div class="kpi-label">Sisa Dirty Money</div><div class="kpi-value gold" id="dashKotorSaldo">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🏦</div><div class="kpi-body"><div class="kpi-label">Saldo Awal Uang Kotor</div><div class="kpi-value" id="dashKotorAwal">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Total Pemasukan Uang Kotor</div><div class="kpi-value green" id="dashKotorMasuk">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📤</div><div class="kpi-body"><div class="kpi-label">Total Pengeluaran Uang Kotor</div><div class="kpi-value red" id="dashKotorKeluar">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">⏳</div><div class="kpi-body"><div class="kpi-label">Saldo Kas Saat Ini (Kotor)</div><div class="kpi-value gold" id="dashKotorSaldo">Rp0</div></div></div>
     </div>
     <div class="stamp" style="color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px; margin:-10px 0 22px;">
-      Sisa Dirty Money = Saldo Awal + Dirty Money Masuk − (Sudah Dicuci ke Cash + Dipakai Langsung). Angka ini adalah uang panas yang <b>masih beredar, belum resmi jadi Cash</b>.
+      Saldo Kas Saat Ini (Kotor) = Saldo Awal + Total Pemasukan Uang Kotor − Total Pengeluaran Uang Kotor. "Total Pengeluaran Uang Kotor" mencakup uang yang sudah dibersihkan ke Kas Bersih maupun yang dipakai langsung sebagai pengeluaran. Angka ini adalah uang yang <b>masih mengendap, belum resmi disetor</b>.
     </div>
 
     <div class="dash-grid">
@@ -634,21 +624,16 @@
     </div>
 
     <div class="seg" id="lgTabs">
-      <button type="button" class="seg-btn active" data-lg="buku">💵 Cash <span style="opacity:.65;font-weight:400;">(Bersih)</span></button>
-      <button type="button" class="seg-btn" data-lg="kotor">🕶️ Dirty Money <span style="opacity:.65;font-weight:400;">(Kotor)</span></button>
+      <button type="button" class="seg-btn active" data-lg="buku">📖 Buku Kas</button>
+      <button type="button" class="seg-btn" data-lg="kotor">🧺 Uang Kotor (Belum Disetor)</button>
     </div>
-    <div id="lgPaneBuku" class="money-pane clean">
-    <div class="money-pane-head">
-      <h3>💵 Cash — Kas Bersih</h3>
-      <span class="money-tag clean">✅ Sah &amp; Aman Dipakai</span>
-    </div>
-    <div class="info-box"><span class="info-icon">💡</span><span><b>Cash dan Dirty Money adalah dua saldo yang benar-benar terpisah</b> — persis seperti di GTA RP. Cash di sini murni terisi dari 2 sumber: pesanan yang <b>SELESAI</b>, dan Dirty Money yang sudah <b>dicuci</b>. Kas keluar otomatis tercatat dari tab <b>Pengeluaran</b>. Kamu tidak perlu input manual di sini.</span></div>
-    <div class="cashflow-grid-5">
+    <div id="lgPaneBuku">
+    <div class="info-box"><span class="info-icon">💡</span><span>Ini adalah <b>ringkasan kas bersih</b>: kas masuk otomatis tercatat saat pesanan berstatus <b>SELESAI</b>, dan kas keluar otomatis tercatat dari tab <b>Pengeluaran</b>. Kamu tidak perlu input manual di sini.</span></div>
+    <div class="cashflow-grid-4">
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🏦</div><div class="kpi-body"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="lgSaldoAwal">Rp0</div></div></div>
-      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🛒</div><div class="kpi-body"><div class="kpi-label">Pemasukan dari Pesanan</div><div class="kpi-value green" id="lgMasukPesanan">Rp0</div></div></div>
-      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🧼</div><div class="kpi-body"><div class="kpi-label">Pemasukan dari Dirty Money</div><div class="kpi-value gold" id="lgMasukDicuci">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Total Kas Masuk</div><div class="kpi-value green" id="lgMasuk">Rp0</div></div></div>
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📤</div><div class="kpi-body"><div class="kpi-label">Total Kas Keluar</div><div class="kpi-value red" id="lgKeluar">Rp0</div></div></div>
-      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">💰</div><div class="kpi-body"><div class="kpi-label">Saldo Cash Saat Ini</div><div class="kpi-value brass" id="lgSaldoAkhir">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">💰</div><div class="kpi-body"><div class="kpi-label">Saldo Akhir</div><div class="kpi-value brass" id="lgSaldoAkhir">Rp0</div></div></div>
     </div>
 
     <div class="chips" data-from="lgFilterDari" data-to="lgFilterSampai"><button type="button" class="chip" data-range="today">Hari ini</button><button type="button" class="chip" data-range="7">7 hari terakhir</button><button type="button" class="chip" data-range="month">Bulan ini</button><button type="button" class="chip active" data-range="all">Semua</button></div>
@@ -656,7 +641,7 @@
       <div class="field"><label>Dari Tanggal</label><input type="date" id="lgFilterDari"></div>
       <div class="field"><label>Sampai Tanggal</label><input type="date" id="lgFilterSampai"></div>
       <div class="field"><label>🔍 Cari keterangan / pemesan / item</label><input type="search" id="lgFilterKeyword" placeholder="Ketik untuk mencari..."></div>
-      <div class="field"><label>Sumber Transaksi</label><select id="lgFilterJenis"><option value="">Semua</option><option value="pesanan">🛒 Pesanan</option><option value="dicuci">🧼 Dicuci dari Dirty Money</option><option value="pengeluaran">📦 Pengeluaran</option></select></div>
+      <div class="field"><label>Jenis Transaksi</label><select id="lgFilterJenis"><option value="">Semua</option><option value="masuk">📥 Kas masuk</option><option value="keluar">📤 Kas keluar</option></select></div>
       <button type="button" class="btn ghost" id="lgFilterResetBtn">↺ Reset Filter</button>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
@@ -676,25 +661,21 @@
     <div style="margin:-6px 0 8px;"><button type="button" class="btn ghost sm" id="lgMoreBtn" hidden></button></div>
     </div>
 
-    <div id="lgPaneKotor" class="money-pane dirty" hidden>
-    <div class="money-pane-head">
-      <h3>🕶️ Dirty Money — Uang Kotor</h3>
-      <span class="money-tag dirty">⚠️ Belum Tercatat Resmi</span>
-    </div>
-    <div class="info-box dirty"><span class="info-icon">🕶️</span><span><b>Dirty Money adalah saldo TERPISAH dari Cash</b> — bukan cuma "Cash yang belum resmi", tapi benar-benar dompet lain. Uang di sini <b>tidak bisa dipakai layaknya Cash</b> dan berisiko hilang/disita kalau tidak segera diurus. Satu-satunya cara pindah dari Dirty Money ke Cash adalah lewat tombol <b>🧼 Cuci</b> (otomatis muncul di tab Cash sebagai "Dicuci dari Dirty Money"). Kalau uang kotor ini terpaksa langsung dipakai/dibelanjakan sebelum sempat dicuci, catat sebagai <b>Pengeluaran</b> — nominalnya berkurang dari sisa Dirty Money tapi tidak pernah tercatat jadi Cash.</span></div>
+    <div id="lgPaneKotor" hidden>
+    <div class="info-box warn"><span class="info-icon">🧺</span><span>Pakai tab ini untuk mencatat uang yang sudah kamu terima tapi <b>belum resmi disetor</b> (misalnya belum masuk rekening/kasir utama). Setelah kamu tekan <b>Bersihkan</b>, nominalnya baru pindah jadi Kas Bersih dan otomatis muncul di Buku Kas. Kalau uang kotor ini langsung dipakai/dibelanjakan sebelum sempat disetor, catat sebagai <b>Pengeluaran</b> — nominalnya berkurang dari sisa uang kotor tapi tidak masuk ke Kas Bersih.</span></div>
     <div class="cashflow-grid-5">
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🏦</div><div class="kpi-body"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="dcAwal">Rp0</div><button type="button" class="btn ghost sm" id="dcAwalBtn" style="margin-top:8px;">✏️ Ubah Saldo Awal</button></div></div>
-      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Dirty Money Masuk</div><div class="kpi-value green" id="dcMasuk">Rp0</div></div></div>
-      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🧼</div><div class="kpi-body"><div class="kpi-label">Sudah Dicuci ke Cash</div><div class="kpi-value brass" id="dcKeluar">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Total Uang Kotor Masuk</div><div class="kpi-value green" id="dcMasuk">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🧼</div><div class="kpi-body"><div class="kpi-label">Sudah Dibersihkan</div><div class="kpi-value brass" id="dcKeluar">Rp0</div></div></div>
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📤</div><div class="kpi-body"><div class="kpi-label">Pengeluaran Langsung</div><div class="kpi-value red" id="dcPengeluaran">Rp0</div></div></div>
-      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">⏳</div><div class="kpi-body"><div class="kpi-label">Sisa Dirty Money</div><div class="kpi-value gold" id="dcAkhir">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">⏳</div><div class="kpi-body"><div class="kpi-label">Sisa Belum Dibersihkan</div><div class="kpi-value gold" id="dcAkhir">Rp0</div></div></div>
     </div>
-    <div class="stamp" style="margin:-6px 0 14px;">Sisa Dirty Money = Saldo Awal + Dirty Money Masuk − Sudah Dicuci − Pengeluaran Langsung. Semakin kecil angka ini, semakin sedikit uang panas yang masih beredar dan berisiko.</div>
+    <div class="stamp" style="margin:-6px 0 14px;">Sisa Belum Dibersihkan = Saldo Awal + Uang Kotor Masuk − Sudah Dibersihkan − Pengeluaran Langsung. Semakin kecil angka ini, semakin sedikit uang yang masih mengendap di luar kas utama.</div>
     <form class="item-form" id="dirtyForm" style="grid-template-columns:1fr 1fr 1fr 2fr;">
       <div class="field"><label>Jenis</label><select id="dcJenis"><option value="MASUK">📥 Uang Masuk</option><option value="KELUAR">📤 Pengeluaran</option></select></div>
       <div class="field"><label>Tanggal</label><input type="date" id="dcTanggal" required></div>
       <div class="field"><label>Nominal (Rp)</label><input type="number" id="dcNominal" min="1" step="1" placeholder="Contoh: 150000" required></div>
-      <div class="field"><label>Keterangan (wajib)</label><input type="text" id="dcKet" placeholder="Contoh: Hasil transaksi belum dicuci" required></div>
+      <div class="field"><label>Keterangan (wajib)</label><input type="text" id="dcKet" placeholder="Contoh: Hasil penjualan belum disetor" required></div>
       <div class="full"><button type="submit" class="btn" id="dcSubmitBtn">➕ Catat Uang Masuk</button></div>
     </form>
     <div style="margin:0 0 10px;"><button type="button" class="btn ghost" id="dcCleanAllBtn" hidden></button></div>
@@ -930,7 +911,7 @@
     </div>
 
     <div class="config-card" style="max-width:520px; margin-top:16px;">
-      <label>Webhook — Dirty Money (Arus Uang Kotor)</label>
+      <label>Webhook — Arus Uang Kotor</label>
       <input type="text" id="cWebhookUangKotor" placeholder="https://discord.com/api/webhooks/...">
       <div class="stamp" style="margin-top:10px; color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px;">
         Terkirim setiap kali ada uang kotor masuk, dibersihkan ke Kas Bersih, atau dipakai langsung sebagai pengeluaran.
@@ -1054,7 +1035,7 @@
   let state = { items: [], orders: [], archives: [], expenses: [], recipes: [], craftingLogs: [], config: { targetBulanan: 100000000, batasStok: 20, currency: 'Rp', saldoAwal: 0, webhookPesanan: '', webhookSelesai: '', webhookPengeluaran: '', webhookStok: '', webhookStokGerak: '', webhookCrafting: '', webhookPembukuan: '', webhookUangKotor: '', webhookPengajian: '' } };
   state.stockMovements = []; state.dirtyCash = []; state.slips = [];
   let filters = { tanggalDari: '', tanggalSampai: '', pemesan: '', status: '', statusPesanan: '' };
-  let ledgerFilters = { tanggalDari: '', tanggalSampai: '', keyword: '', sumber: '' };
+  let ledgerFilters = { tanggalDari: '', tanggalSampai: '', keyword: '' };
 
   const DEFAULT_ITEMS = [
     { id:'i1', nama:'GLOCK 18', kategori:'Senjata', hargaA:72500, maxA:20, hargaN:75000, maxN:10, stok:50 },
@@ -1699,20 +1680,18 @@
         seq: o._seq || 0,
         keterangan: o.keterangan ? `${autoKet} — ${o.keterangan}` : autoKet,
         jenis: 'masuk',
-        sumber: 'pesanan',
         jumlah: o.total,
         searchHay: `${o.pemesan} ${item ? item.nama : ''} ${o.jenis} ${o.keterangan||''}`.toLowerCase()
       });
     });
-    state.dirtyCash.filter(d=>d.jenis!=='KELUAR' && d.status==='BERSIH').forEach(d=>{
+    state.dirtyCash.filter(d=>d.status==='BERSIH').forEach(d=>{
       entries.push({
         tanggal: (d.dibersihkanPada||d.tanggal||'').slice(0,10),
         seq: 0,
-        keterangan: `Dicuci dari Dirty Money — ${d.keterangan}`,
+        keterangan: `Uang Kotor dibersihkan — ${d.keterangan}`,
         jenis: 'masuk',
-        sumber: 'dicuci',
         jumlah: d.nominal,
-        searchHay: `dirty money uang kotor dicuci ${d.keterangan}`.toLowerCase()
+        searchHay: `uang kotor kas kotor ${d.keterangan}`.toLowerCase()
       });
     });
     state.expenses.forEach(e=>{
@@ -1721,7 +1700,6 @@
         seq: 0,
         keterangan: e.itemId ? (e.keterangan ? `${e.keterangan} — ${e.itemNama} ×${e.jumlah}` : `Restock ${e.itemNama} ×${e.jumlah}`) : (e.keterangan || e.itemNama || 'Pengeluaran'),
         jenis: 'keluar',
-        sumber: 'pengeluaran',
         jumlah: e.total,
         searchHay: `${e.itemNama||''} ${e.keterangan||''}`.toLowerCase()
       });
@@ -1738,7 +1716,7 @@
     return entries.filter(en=>{
       if(ledgerFilters.tanggalDari && (en.tanggal||'') < ledgerFilters.tanggalDari) return false;
       if(ledgerFilters.tanggalSampai && (en.tanggal||'') > ledgerFilters.tanggalSampai) return false;
-      if(ledgerFilters.sumber && en.sumber !== ledgerFilters.sumber) return false;
+      if(ledgerFilters.jenis && en.jenis !== ledgerFilters.jenis) return false;
       if(ledgerFilters.keyword){
         const kw = ledgerFilters.keyword.toLowerCase();
         if(!en.searchHay.includes(kw)) return false;
@@ -1761,13 +1739,11 @@
     });
     const saldoAkhir = running;
 
-    const totalMasukPesanan = allEntries.filter(en=>en.sumber==='pesanan').reduce((s,en)=>s+en.jumlah,0);
-    const totalMasukDicuci = allEntries.filter(en=>en.sumber==='dicuci').reduce((s,en)=>s+en.jumlah,0);
+    const totalMasuk = allEntries.filter(en=>en.jenis==='masuk').reduce((s,en)=>s+en.jumlah,0);
     const totalKeluar = allEntries.filter(en=>en.jenis==='keluar').reduce((s,en)=>s+en.jumlah,0);
 
     document.getElementById('lgSaldoAwal').textContent = rupiah(saldoAwal);
-    document.getElementById('lgMasukPesanan').textContent = rupiah(totalMasukPesanan);
-    document.getElementById('lgMasukDicuci').textContent = rupiah(totalMasukDicuci);
+    document.getElementById('lgMasuk').textContent = rupiah(totalMasuk);
     document.getElementById('lgKeluar').textContent = rupiah(totalKeluar);
     const saldoAkhirEl = document.getElementById('lgSaldoAkhir');
     saldoAkhirEl.textContent = rupiah(saldoAkhir);
@@ -1775,7 +1751,6 @@
 
     const tbody = document.getElementById('ledgerRows'), btn = document.getElementById('lgMoreBtn'), LIMIT = 50;
     const esc2 = t => esc(t);
-    const sumberLabel = { pesanan:'🛒 Pesanan', dicuci:'🧼 Dicuci dari Dirty Money', pengeluaran:'📦 Pengeluaran' };
     if(!allEntries.length){
       tbody.innerHTML = '<tr class="empty-row"><td colspan="6">📭 Belum ada transaksi. Kas masuk akan muncul otomatis saat pesanan berstatus SELESAI, sedangkan kas keluar tercatat otomatis dari tab Pengeluaran.</td></tr>'; btn.hidden = true;
     } else if(!filtered.length){
@@ -1785,11 +1760,10 @@
       const ordered = filtered.slice().reverse(), shown = lgShowAll ? ordered : ordered.slice(0, LIMIT);
       const rows = shown.map(en=>{
         const isMasuk = en.jenis === 'masuk';
-        const badgeCls = en.sumber === 'dicuci' ? 'dicuci' : (isMasuk ? 'masuk' : 'keluar');
         return `<tr>
           <td style="white-space:nowrap">${fmtDateShort(en.tanggal)}</td>
           <td>${esc2(en.keterangan)}</td>
-          <td><span class="ledger-badge ${badgeCls}">${sumberLabel[en.sumber] || (isMasuk?'Kas Masuk':'Kas Keluar')}</span></td>
+          <td><span class="ledger-badge ${isMasuk?'masuk':'keluar'}">${isMasuk?'Kas Masuk':'Kas Keluar'}</span></td>
           <td class="num ledger-num-pos">${isMasuk ? rupiah(en.jumlah) : '-'}</td>
           <td class="num ledger-num-neg">${!isMasuk ? rupiah(en.jumlah) : '-'}</td>
           <td class="num"><b>${rupiah(runningByEntry.get(en))}</b></td>
@@ -1801,7 +1775,7 @@
       btn.textContent = lgShowAll ? 'Tampilkan lebih sedikit' : `Tampilkan semua (${ordered.length} transaksi)`;
     }
 
-    const active = !!(ledgerFilters.tanggalDari || ledgerFilters.tanggalSampai || ledgerFilters.keyword || ledgerFilters.sumber);
+    const active = !!(ledgerFilters.tanggalDari || ledgerFilters.tanggalSampai || ledgerFilters.keyword || ledgerFilters.jenis);
     const fm = filtered.filter(en=>en.jenis==='masuk').reduce((a,en)=>a+en.jumlah,0), fk = filtered.filter(en=>en.jenis==='keluar').reduce((a,en)=>a+en.jumlah,0);
     document.getElementById('lgFilterInfo').textContent = filtered.length
       ? `${filtered.length} transaksi · masuk ${rupiah(fm)} · keluar ${rupiah(fk)}` + (active ? ' (filter aktif)' : '') : '';
@@ -1812,9 +1786,8 @@
     const all = buildLedgerEntries(), map = new Map(); let run = state.config.saldoAwal || 0;
     all.forEach(en=>{ run += en.jenis === 'masuk' ? en.jumlah : -en.jumlah; map.set(en, run); });
     const q = v => `"${String(v).replace(/"/g,'""')}"`;
-    const sumberLabelCsv = { pesanan:'Pesanan', dicuci:'Dicuci dari Dirty Money', pengeluaran:'Pengeluaran' };
-    const lines = [['Tanggal','Keterangan','Sumber','Jenis','Kas Masuk','Kas Keluar','Saldo Berjalan'].map(q).join(';')];
-    applyLedgerFilters(all).forEach(en=> lines.push([en.tanggal, en.keterangan, sumberLabelCsv[en.sumber]||en.sumber, en.jenis==='masuk'?'Kas Masuk':'Kas Keluar', en.jenis==='masuk'?en.jumlah:0, en.jenis==='keluar'?en.jumlah:0, map.get(en)].map(q).join(';')));
+    const lines = [['Tanggal','Keterangan','Jenis','Kas Masuk','Kas Keluar','Saldo Berjalan'].map(q).join(';')];
+    applyLedgerFilters(all).forEach(en=> lines.push([en.tanggal, en.keterangan, en.jenis==='masuk'?'Kas Masuk':'Kas Keluar', en.jenis==='masuk'?en.jumlah:0, en.jenis==='keluar'?en.jumlah:0, map.get(en)].map(q).join(';')));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' }));
     a.download = `pembukuan-${todayISO()}.csv`; document.body.appendChild(a); a.click(); a.remove();
@@ -1831,9 +1804,9 @@
   document.getElementById('lgFilterDari').addEventListener('input', (e)=>{ ledgerFilters.tanggalDari = e.target.value; renderPembukuan(); });
   document.getElementById('lgFilterSampai').addEventListener('input', (e)=>{ ledgerFilters.tanggalSampai = e.target.value; renderPembukuan(); });
   document.getElementById('lgFilterKeyword').addEventListener('input', (e)=>{ ledgerFilters.keyword = e.target.value.trim(); renderPembukuan(); });
-  document.getElementById('lgFilterJenis').addEventListener('input', (e)=>{ ledgerFilters.sumber = e.target.value; renderPembukuan(); });
+  document.getElementById('lgFilterJenis').addEventListener('input', (e)=>{ ledgerFilters.jenis = e.target.value; renderPembukuan(); });
   document.getElementById('lgFilterResetBtn').addEventListener('click', ()=>{
-    ledgerFilters = { tanggalDari:'', tanggalSampai:'', keyword:'', sumber:'' };
+    ledgerFilters = { tanggalDari:'', tanggalSampai:'', keyword:'', jenis:'' };
     ['lgFilterDari','lgFilterSampai','lgFilterKeyword','lgFilterJenis'].forEach(id=> document.getElementById(id).value = '');
     document.querySelectorAll('[data-from="lgFilterDari"] .chip').forEach(c=>c.classList.remove('active'));
     renderPembukuan();
@@ -2804,21 +2777,21 @@
     if(v === null) return;
     state.config.saldoAwalKotor = Math.max(0, Math.floor(Number(v)) || 0);
     await dbSaveConfig(state.config);
-    renderAll(); toast('✅ Saldo awal Dirty Money disimpan.');
+    renderAll(); toast('✅ Saldo awal uang kotor disimpan.');
   });
   document.getElementById('dcCleanAllBtn').addEventListener('click', async ()=>{
     const pending = state.dirtyCash.filter(d=>d.jenis!=='KELUAR' && d.status==='KOTOR'); if(!pending.length) return;
     const total = pending.reduce((a,d)=>a+d.nominal,0);
-    if(!confirm(`Cuci ${pending.length} catatan senilai ${rupiah(total)} jadi Cash?`)) return;
+    if(!confirm(`Pindahkan ${pending.length} catatan senilai ${rupiah(total)} ke Kas Bersih?`)) return;
     const now = new Date().toISOString();
     for(const d of pending){
       d.status = 'BERSIH'; d.dibersihkanPada = now;
       const { error } = await sb.from('kas_kotor').update({ status:'BERSIH', dibersihkan_pada:now }).eq('id', d.id);
       if(error) console.error('update kas_kotor failed', error);
     }
-    renderAll(); toast(`🧼 ${pending.length} catatan Dirty Money berhasil dicuci jadi Cash.`);
-    sendDiscordDirtyCashRecap({ aksi:'BERSIHKAN', jumlahCatatan:pending.length, nominal:total, keterangan:'Cuci semua (massal)' });
-    sendDiscordLedgerRecap({ jenis:'MASUK', sumber:'Dirty Money Dicuci', nominal:total, keterangan:`${pending.length} catatan Dirty Money dicuci sekaligus` });
+    renderAll(); toast(`🧼 ${pending.length} catatan berhasil dibersihkan ke Kas Bersih.`);
+    sendDiscordDirtyCashRecap({ aksi:'BERSIHKAN', jumlahCatatan:pending.length, nominal:total, keterangan:'Bersihkan semua (massal)' });
+    sendDiscordLedgerRecap({ jenis:'MASUK', sumber:'Uang Kotor Dibersihkan', nominal:total, keterangan:`${pending.length} catatan uang kotor dibersihkan sekaligus` });
   });
   function renderDirty(){
     const awal = state.config.saldoAwalKotor || 0;
@@ -2831,17 +2804,17 @@
     document.getElementById('dcPengeluaran').textContent = rupiah(pengeluaran);
     document.getElementById('dcAkhir').textContent = rupiah(awal + masuk - keluar - pengeluaran);
     const pending = state.dirtyCash.filter(d=>d.jenis!=='KELUAR' && d.status==='KOTOR'), pendTotal = pending.reduce((a,d)=>a+d.nominal,0), cab = document.getElementById('dcCleanAllBtn');
-    cab.hidden = pending.length < 2; cab.textContent = `🧼 Cuci semua (${pending.length} catatan · ${rupiah(pendTotal)})`;
+    cab.hidden = pending.length < 2; cab.textContent = `🧼 Bersihkan semua (${pending.length} catatan · ${rupiah(pendTotal)})`;
     const tb = document.getElementById('dirtyRows');
     tb.innerHTML = state.dirtyCash.length ? state.dirtyCash.map(d=>{
       const isKeluar = d.jenis === 'KELUAR', bersih = d.status === 'BERSIH';
       const jenisBadge = isKeluar ? '<span class="badge bad">📤 Keluar</span>' : '<span class="badge ok">📥 Masuk</span>';
-      const statusBadge = isKeluar ? '<span class="badge mid">✔️ Selesai</span>' : `<span class="badge ${bersih?'ok':'mid'}">${bersih?'✅ Sudah Dicuci':'🕶️ Masih Kotor'}</span>`;
+      const statusBadge = isKeluar ? '<span class="badge mid">✔️ Selesai</span>' : `<span class="badge ${bersih?'ok':'mid'}">${bersih?'✅ Bersih':'⏳ Belum Bersih'}</span>`;
       const actions = isKeluar
         ? `<button class="icon-btn" data-del-dirty="${d.id}" title="Hapus catatan ini">✕</button>`
-        : (bersih ? '' : `<button class="btn sm" data-clean-dirty="${d.id}" title="Cuci jadi Cash">🧼 Cuci</button> <button class="icon-btn" data-del-dirty="${d.id}" title="Hapus catatan ini">✕</button>`);
+        : (bersih ? '' : `<button class="btn sm" data-clean-dirty="${d.id}" title="Pindahkan ke Kas Bersih">🧼 Bersihkan</button> <button class="icon-btn" data-del-dirty="${d.id}" title="Hapus catatan ini">✕</button>`);
       return `<tr><td>${fmtDateShort(d.tanggal)}</td><td>${jenisBadge}</td><td class="num">${rupiah(d.nominal)}</td><td>${esc(d.keterangan)}</td><td>${statusBadge}</td><td>${actions}</td></tr>`;
-    }).join('') : '<tr class="empty-row"><td colspan="6">🕶️ Belum ada catatan Dirty Money. Gunakan form di atas untuk mencatat uang yang belum dicuci.</td></tr>';
+    }).join('') : '<tr class="empty-row"><td colspan="6">🧺 Belum ada catatan uang kotor. Gunakan form di atas untuk mencatat uang yang belum disetor.</td></tr>';
   }
   document.getElementById('dcTanggal').value = todayISO();
   const dcJenisSel = document.getElementById('dcJenis'), dcSubmitBtn = document.getElementById('dcSubmitBtn');
@@ -2861,22 +2834,22 @@
     const { error } = await sb.from('kas_kotor').insert([{ id:d.id, tanggal, nominal, keterangan:ket, status, jenis, dibuat_pada:d.dibuatPada }]);
     if(error) console.error('insert kas_kotor failed', error);
     e.target.reset(); document.getElementById('dcTanggal').value = todayISO(); dcSubmitBtn.textContent = '➕ Catat Uang Masuk';
-    renderAll(); toast(jenis === 'KELUAR' ? '📤 Pengeluaran Dirty Money dicatat.' : '🕶️ Dirty Money masuk dicatat.');
+    renderAll(); toast(jenis === 'KELUAR' ? '📤 Pengeluaran uang kotor dicatat.' : '📥 Uang kotor masuk dicatat.');
     sendDiscordDirtyCashRecap({ aksi: jenis === 'KELUAR' ? 'PENGELUARAN' : 'MASUK', nominal, keterangan:ket, tanggal });
   });
   document.getElementById('dirtyRows').addEventListener('click', async (e)=>{
     const clean = e.target.closest('[data-clean-dirty]'), del = e.target.closest('[data-del-dirty]');
     if(clean){
       const d = state.dirtyCash.find(x=>x.id===clean.dataset.cleanDirty); if(!d) return;
-      if(!confirm(`Cuci ${rupiah(d.nominal)} jadi Cash?`)) return;
+      if(!confirm(`Pindahkan ${rupiah(d.nominal)} ke Kas Bersih?`)) return;
       d.status = 'BERSIH'; d.dibersihkanPada = new Date().toISOString();
       const { error } = await sb.from('kas_kotor').update({ status:'BERSIH', dibersihkan_pada:d.dibersihkanPada }).eq('id', d.id);
       if(error) console.error('update kas_kotor failed', error);
-      renderAll(); toast('🧼 Dirty Money dicuci jadi Cash.');
+      renderAll(); toast('Uang kotor dibersihkan ke Kas Bersih.');
       sendDiscordDirtyCashRecap({ aksi:'BERSIHKAN', nominal:d.nominal, keterangan:d.keterangan, tanggal:d.tanggal });
-      sendDiscordLedgerRecap({ jenis:'MASUK', sumber:'Dirty Money Dicuci', nominal:d.nominal, keterangan:d.keterangan });
+      sendDiscordLedgerRecap({ jenis:'MASUK', sumber:'Uang Kotor Dibersihkan', nominal:d.nominal, keterangan:d.keterangan });
     } else if(del){
-      if(!confirm('Hapus catatan Dirty Money ini?')) return;
+      if(!confirm('Hapus catatan uang kotor ini?')) return;
       state.dirtyCash = state.dirtyCash.filter(x=>x.id!==del.dataset.delDirty);
       await sb.from('kas_kotor').delete().eq('id', del.dataset.delDirty);
       renderAll(); toast('Catatan dihapus.');
@@ -3521,12 +3494,12 @@
   async function sendDiscordDirtyCashRecap({ aksi, nominal, keterangan, tanggal, jumlahCatatan }){
     const url = (state.config.webhookUangKotor||'').trim();
     if(!url) return;
-    const titleMap = { MASUK:'🕶️ Dirty Money Masuk', PENGELUARAN:'📤 Pengeluaran Dirty Money', BERSIHKAN:'🧼 Dirty Money Dicuci ke Cash' };
+    const titleMap = { MASUK:'📥 Uang Kotor Masuk', PENGELUARAN:'📤 Pengeluaran Uang Kotor', BERSIHKAN:'🧼 Uang Kotor Dibersihkan' };
     const colorMap = { MASUK:DISCORD_COLOR_OK, PENGELUARAN:DISCORD_COLOR_WARN, BERSIHKAN:DISCORD_COLOR_INFO };
     const sisa = (state.config.saldoAwalKotor||0) + state.dirtyCash.reduce((s,d)=> d.jenis!=='KELUAR' ? s+d.nominal : s, 0) - computeKasBersih() - computeDirtyExpense();
     const fields = [
       { name: 'Nominal', value: rupiah(nominal), inline: true },
-      { name: 'Sisa Dirty Money Sekarang', value: rupiah(sisa), inline: true }
+      { name: 'Sisa Uang Kotor Sekarang', value: rupiah(sisa), inline: true }
     ];
     if(jumlahCatatan) fields.push({ name: 'Jumlah Catatan', value: String(jumlahCatatan), inline: true });
     if(tanggal) fields.push({ name: 'Tanggal', value: fmtDateShort(tanggal), inline: true });
