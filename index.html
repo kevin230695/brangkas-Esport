@@ -327,7 +327,7 @@
       <div class="kpi-card"><div class="kpi-label">Saldo Kas Saat Ini</div><div class="kpi-value brass" id="dashArusKas">Rp0</div></div>
     </div>
     <div class="stamp" style="color:var(--text-dim); text-transform:none; letter-spacing:normal; font-family:var(--body); font-size:12.5px; margin:-10px 0 22px;">
-      Saldo Kas Saat Ini = Saldo Awal + Total Pemasukan − Total Pengeluaran. Pemasukan hanya dihitung dari pesanan berstatus SELESAI dan uang kotor yang sudah dibersihkan.
+      Saldo Kas Saat Ini = Saldo Awal + Total Pemasukan − Total Pengeluaran. Pemasukan dihitung dari pesanan berstatus SELESAI, uang kotor yang sudah dibersihkan, dan pemasukan manual (tab Pembukuan → Pemasukan Manual).
     </div>
 
     <div class="sub-head">🧺 Kas Kotor <span style="font-weight:400;color:var(--text-faint);font-size:12px;">(belum disetor)</span></div>
@@ -684,9 +684,10 @@
     <div class="seg" id="lgTabs">
       <button type="button" class="seg-btn active" data-lg="buku">📖 Buku Kas</button>
       <button type="button" class="seg-btn" data-lg="kotor">🧺 Uang Kotor (Belum Disetor)</button>
+      <button type="button" class="seg-btn" data-lg="manual">➕ Pemasukan Manual</button>
     </div>
     <div id="lgPaneBuku">
-    <div class="info-box"><span class="info-icon">💡</span><span>Ini adalah <b>ringkasan kas bersih</b>: kas masuk otomatis tercatat saat pesanan berstatus <b>SELESAI</b>, dan kas keluar otomatis tercatat dari tab <b>Pengeluaran</b>. Kamu tidak perlu input manual di sini.</span></div>
+    <div class="info-box"><span class="info-icon">💡</span><span>Ini adalah <b>ringkasan kas bersih</b>: kas masuk otomatis tercatat saat pesanan berstatus <b>SELESAI</b>, kas keluar otomatis tercatat dari tab <b>Pengeluaran</b>, dan pemasukan di luar pesanan bisa dicatat di tab <b>Pemasukan Manual</b>. Kamu tidak perlu input manual di sini.</span></div>
     <div class="cashflow-grid-4">
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🏦</div><div class="kpi-body"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="lgSaldoAwal">Rp0</div></div></div>
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Total Kas Masuk</div><div class="kpi-value green" id="lgMasuk">Rp0</div></div></div>
@@ -741,6 +742,26 @@
       <table>
         <thead><tr><th>Tanggal</th><th>Jenis</th><th class="num">Nominal</th><th>Keterangan</th><th>Status</th><th></th></tr></thead>
         <tbody id="dirtyRows"></tbody>
+      </table>
+    </div>
+    </div>
+
+    <div id="lgPaneManual" hidden>
+    <div class="info-box"><span class="info-icon">➕</span><span>Untuk pemasukan kas bersih di luar pesanan — misalnya top up saldo, sponsor, donasi, atau transfer dari pemilik. Setiap catatan di sini langsung dianggap kas bersih dan otomatis muncul di <b>Buku Kas</b> serta menambah <b>Saldo Kas Saat Ini</b> di Dashboard.</span></div>
+    <div class="cashflow-grid-4">
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">➕</div><div class="kpi-body"><div class="kpi-label">Total Pemasukan Manual</div><div class="kpi-value green" id="miTotal">Rp0</div></div></div>
+      <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🧾</div><div class="kpi-body"><div class="kpi-label">Jumlah Catatan</div><div class="kpi-value" id="miCount">0</div></div></div>
+    </div>
+    <form class="item-form" id="manualIncomeForm" style="grid-template-columns:1fr 1fr 2fr;">
+      <div class="field"><label>Tanggal</label><input type="date" id="miTanggal" required></div>
+      <div class="field"><label>Nominal (Rp)</label><input type="number" id="miNominal" min="1" step="1" placeholder="Contoh: 500000" required></div>
+      <div class="field"><label>Keterangan (wajib)</label><input type="text" id="miKet" placeholder="Contoh: Top up saldo dari owner" required></div>
+      <div class="full"><button type="submit" class="btn">➕ Catat Pemasukan</button></div>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tanggal</th><th class="num">Nominal</th><th>Keterangan</th><th>Dicatat Pada</th><th></th></tr></thead>
+        <tbody id="manualIncomeRows"></tbody>
       </table>
     </div>
     </div>
@@ -1116,7 +1137,7 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlenB0dWt1a2NveGxheWh5amR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4MjYwNjAsImV4cCI6MjEwNTQwMjA2MH0.JZiTTRQvBkMIjeYsTJzlwAXDQPy1RTvl0G5pImnrPyQ';  // contoh: 'eyJhbGciOi...'
 
   let state = { items: [], orders: [], archives: [], expenses: [], recipes: [], craftingLogs: [], config: { targetBulanan: 100000000, batasStok: 20, currency: 'Rp', saldoAwal: 0, webhookPesanan: '', webhookSelesai: '', webhookPengeluaran: '', webhookStok: '', webhookStokGerak: '', webhookCrafting: '', webhookPembukuan: '', webhookUangKotor: '', webhookPengajian: '' } };
-  state.stockMovements = []; state.dirtyCash = []; state.slips = [];
+  state.stockMovements = []; state.dirtyCash = []; state.slips = []; state.manualIncomes = [];
   let filters = { tanggalDari: '', tanggalSampai: '', pemesan: '', status: '', statusPesanan: '' };
   let ledgerFilters = { tanggalDari: '', tanggalSampai: '', keyword: '' };
 
@@ -1200,6 +1221,7 @@
 
   function rowsToStockMove(r){ return { id:r.id, itemId:r.item_id, itemNama:r.item_nama||'', tipe:r.tipe, jumlah:Number(r.jumlah), stokSetelah:Number(r.stok_setelah), keterangan:r.keterangan||'', dibuatPada:r.dibuat_pada }; }
   function rowsToDirty(r){ return { id:r.id, tanggal:r.tanggal, nominal:Number(r.nominal), keterangan:r.keterangan||'', status:r.status||'KOTOR', jenis:r.jenis||'MASUK', dibersihkanPada:r.dibersihkan_pada, dibuatPada:r.dibuat_pada }; }
+  function rowsToManualIncome(r){ return { id:r.id, tanggal:r.tanggal, keterangan:r.keterangan||'', nominal:Number(r.nominal), dibuatPada:r.dibuat_pada }; }
   const esc = t => String(t==null?'':t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   // ---------- Storage (Supabase) ----------
@@ -1246,6 +1268,10 @@
     const { data: slipRows, error: e10 } = await sb.from('payroll_slips').select('*').order('dibuat_pada', { ascending:false });
     if(e10) throw e10;
     state.slips = slipRows || [];
+
+    const { data: miRows, error: e11 } = await sb.from('pemasukan_manual').select('*').order('dibuat_pada', { ascending:false });
+    if(e11) throw e11;
+    state.manualIncomes = (miRows||[]).map(rowsToManualIncome);
 
     const { data: cfgRows, error: e3 } = await sb.from('config').select('*');
     if(e3) throw e3;
@@ -1319,6 +1345,7 @@
   async function dbInsertOrder(o){
     const { error } = await sb.from('orders').insert([{ id:o.id, seq:o._seq, tanggal:o.tanggal, pemesan:o.pemesan, jenis:o.jenis, item_id:o.itemId, jumlah:o.jumlah, harga:o.harga, total:o.total, status:o.status, status_pesanan:o.statusPesanan || 'DIPROSES', keterangan:o.keterangan || '' }]);
     if(error) console.error('insert order failed', error);
+    return error;
   }
   async function dbUpdateOrderStatusPesanan(id, statusPesanan){
     const { error } = await sb.from('orders').update({ status_pesanan: statusPesanan }).eq('id', id);
@@ -1364,6 +1391,15 @@
   async function dbDeleteExpense(id){
     const { error } = await sb.from('pengeluaran').delete().eq('id', id);
     if(error) console.error('delete expense failed', error);
+  }
+  async function dbInsertManualIncome(m){
+    const { error } = await sb.from('pemasukan_manual').insert([{ id:m.id, tanggal:m.tanggal, keterangan:m.keterangan, nominal:m.nominal }]);
+    if(error) console.error('insert pemasukan manual failed', error);
+    return error;
+  }
+  async function dbDeleteManualIncome(id){
+    const { error } = await sb.from('pemasukan_manual').delete().eq('id', id);
+    if(error) console.error('delete pemasukan manual failed', error);
   }
   async function dbInsertRecipe(r){
     const { error } = await sb.from('resep').insert([{ id:r.id, nama:r.nama, result_item_id:r.resultItemId, result_jumlah:r.resultJumlah, bahan:r.bahan }]);
@@ -1418,6 +1454,7 @@
     await sb.from('crafting_log').delete().neq('id','__none__');
     await sb.from('stock_movements').delete().neq('id','__none__');
     await sb.from('kas_kotor').delete().neq('id','__none__');
+    await sb.from('pemasukan_manual').delete().neq('id','__none__');
     await sb.from('payroll_slips').delete().neq('id','__none__');
     await sb.from('resep').delete().neq('id','__none__');
     await sb.from('items').delete().neq('id','__none__');
@@ -1448,6 +1485,7 @@
       .on('postgres_changes', { event:'*', schema:'public', table:'crafting_log' }, async ()=>{ await reloadAndRender(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'stock_movements' }, async ()=>{ await reloadAndRender(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'kas_kotor' }, async ()=>{ await reloadAndRender(); })
+      .on('postgres_changes', { event:'*', schema:'public', table:'pemasukan_manual' }, async ()=>{ await reloadAndRender(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'payroll_slips' }, async ()=>{ await reloadAndRender(); })
       .subscribe();
   }
@@ -1482,6 +1520,7 @@
   }
   function computeKasBersih(){ return state.dirtyCash.reduce((s,d)=> (d.jenis!=='KELUAR' && d.status==='BERSIH') ? s+d.nominal : s, 0); }
   function computeDirtyExpense(){ return state.dirtyCash.reduce((s,d)=> d.jenis==='KELUAR' ? s+d.nominal : s, 0); }
+  function computeTotalManualIncome(){ return state.manualIncomes.reduce((s,m)=> s + Number(m.nominal||0), 0); }
   function itemByName(name){ return state.items.find(i=>i.nama===name); }
 
   function computeOrder(jenis, itemId, jumlah){
@@ -1701,7 +1740,7 @@
     const filtered = applyExpenseFilters(state.expenses);
     // ringkasan
     const totalPengeluaran = computeTotalPengeluaran();
-    const totalPemasukan = computeTotalPemasukanSelesai() + computeKasBersih();
+    const totalPemasukan = computeTotalPemasukanSelesai() + computeKasBersih() + computeTotalManualIncome();
     const bersih = totalPemasukan - totalPengeluaran, bulan = todayISO().slice(0,7);
     document.getElementById('cfPemasukan').textContent = rupiah(totalPemasukan);
     document.getElementById('cfPengeluaran').textContent = rupiah(totalPengeluaran);
@@ -1789,6 +1828,16 @@
         jenis: 'keluar',
         jumlah: e.total,
         searchHay: `${e.itemNama||''} ${e.keterangan||''}`.toLowerCase()
+      });
+    });
+    state.manualIncomes.forEach(m=>{
+      entries.push({
+        tanggal: m.tanggal || '',
+        seq: 0,
+        keterangan: m.keterangan ? `Pemasukan manual — ${m.keterangan}` : 'Pemasukan manual',
+        jenis: 'masuk',
+        jumlah: m.nominal,
+        searchHay: `pemasukan manual ${m.keterangan||''}`.toLowerCase()
       });
     });
     // urutkan kronologis (tanggal lama -> baru), lalu berdasar urutan input
@@ -1886,6 +1935,7 @@
     document.querySelectorAll('#lgTabs .seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.lg === name));
     document.getElementById('lgPaneBuku').hidden = name !== 'buku';
     document.getElementById('lgPaneKotor').hidden = name !== 'kotor';
+    document.getElementById('lgPaneManual').hidden = name !== 'manual';
   }
   document.getElementById('lgTabs').addEventListener('click', e=>{ const b = e.target.closest('.seg-btn'); if(b) setLgPane(b.dataset.lg); });
   document.getElementById('lgFilterDari').addEventListener('input', (e)=>{ ledgerFilters.tanggalDari = e.target.value; renderPembukuan(); });
@@ -2383,7 +2433,7 @@
     document.getElementById('kpiTotalPemesan').textContent = totalPemesan.toLocaleString('id-ID');
 
     const totalPengeluaran = computeTotalPengeluaran();
-    const totalPemasukanSelesai = computeTotalPemasukanSelesai() + computeKasBersih();
+    const totalPemasukanSelesai = computeTotalPemasukanSelesai() + computeKasBersih() + computeTotalManualIncome();
     const saldoAwal = state.config.saldoAwal || 0;
     const saldoKasSaatIni = saldoAwal + totalPemasukanSelesai - totalPengeluaran;
     document.getElementById('dashSaldoAwal').textContent = rupiah(saldoAwal);
@@ -2447,6 +2497,7 @@
     renderPembukuan();
     renderStockMoves();
     renderDirty();
+    renderManualIncome();
     renderPayroll();
     renderRekap();
     renderRekapTanggal();
@@ -2567,6 +2618,7 @@
 
     let anyExceeded = false;
     let totalBelanja = 0;
+    let anyFailed = false;
     const itemLines = [];
     const seqBase = Date.now();
     const orderBatchNo = 'PSN-' + seqBase.toString(36).toUpperCase();
@@ -2575,8 +2627,13 @@
       const jumlah = merged[itemId];
       const r = computeOrder(jenis, itemId, jumlah);
       const order = { id: uid(), _seq: seqBase + i, tanggal, pemesan, jenis, itemId, jumlah, harga:r.harga, total:r.total, status:r.status, statusPesanan:'DIPROSES', keterangan };
+      const error = await dbInsertOrder(order);
+      if(error){
+        anyFailed = true;
+        console.error('pesanan gagal disimpan ke database', error);
+        continue; // jangan tambahkan ke state lokal kalau gagal tersimpan, supaya tidak terlihat "tersimpan" padahal tidak
+      }
       state.orders.push(order);
-      await dbInsertOrder(order);
       if(r.status !== 'OK') anyExceeded = true;
       totalBelanja += r.total;
 
@@ -2587,6 +2644,10 @@
 
     renderAll();
     resetOrderForm();
+    if(anyFailed){
+      toast('⚠️ Sebagian/semua pesanan GAGAL tersimpan ke database. Cek koneksi & console untuk detail error.');
+      return;
+    }
     sendDiscordOrderRecap({ orderBatchNo, pemesan, tanggal, jenis, itemLines, itemCount: itemIds.length, totalBelanja, keterangan, anyExceeded });
     toast(anyExceeded
       ? `${itemIds.length} item pesanan untuk ${pemesan} ditambahkan — ada yang melebihi batas!`
@@ -2944,6 +3005,44 @@
     }
   });
 
+  // ---------- Pemasukan Manual ----------
+  function renderManualIncome(){
+    const list = state.manualIncomes;
+    document.getElementById('miTotal').textContent = rupiah(computeTotalManualIncome());
+    document.getElementById('miCount').textContent = list.length;
+    const tb = document.getElementById('manualIncomeRows');
+    tb.innerHTML = list.length ? list.map(m=>`<tr>
+        <td>${fmtDateShort(m.tanggal)}</td>
+        <td class="num">${rupiah(m.nominal)}</td>
+        <td>${esc(m.keterangan)}</td>
+        <td>${fmtDateTime(m.dibuatPada)}</td>
+        <td><button class="icon-btn" data-del-manual-income="${m.id}" title="Hapus catatan ini">✕</button></td>
+      </tr>`).join('') : '<tr class="empty-row"><td colspan="5">➕ Belum ada pemasukan manual. Gunakan form di atas untuk mencatat pemasukan di luar pesanan.</td></tr>';
+  }
+  document.getElementById('miTanggal').value = todayISO();
+  document.getElementById('manualIncomeForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const nominal = Math.floor(Number(document.getElementById('miNominal').value));
+    const ket = document.getElementById('miKet').value.trim();
+    if(!(nominal >= 1) || !ket){ toast('⚠️ Nominal & keterangan wajib diisi.'); return; }
+    const tanggal = document.getElementById('miTanggal').value || todayISO();
+    const m = { id: uid(), tanggal, keterangan: ket, nominal, dibuatPada: new Date().toISOString() };
+    state.manualIncomes.unshift(m);
+    const error = await dbInsertManualIncome(m);
+    if(error){ toast('Gagal menyimpan: '+error.message); }
+    e.target.reset(); document.getElementById('miTanggal').value = todayISO();
+    renderAll(); toast('➕ Pemasukan manual dicatat.');
+    sendDiscordLedgerRecap({ jenis:'MASUK', sumber:'Pemasukan Manual', nominal, keterangan: ket });
+  });
+  document.getElementById('manualIncomeRows').addEventListener('click', async (e)=>{
+    const del = e.target.closest('[data-del-manual-income]');
+    if(!del) return;
+    if(!confirm('Hapus catatan pemasukan manual ini?')) return;
+    state.manualIncomes = state.manualIncomes.filter(x=>x.id!==del.dataset.delManualIncome);
+    await dbDeleteManualIncome(del.dataset.delManualIncome);
+    renderAll(); toast('Catatan dihapus.');
+  });
+
   // ---------- Penggajian ----------
   const N = v => Math.max(0, Math.floor(Number(v)||0));
   const dbIns = async (t, row) => { const { error } = await sb.from(t).insert([row]); if(error){ console.error(t, error); toast('Gagal menyimpan: '+error.message); } };
@@ -2983,7 +3082,7 @@
     if(v) return printSlip(find(v.dataset.slipView));
     if(pay){
       const x = find(pay.dataset.slipPay); if(!x || x.status!=='DRAFT') return;
-      const saldo = (state.config.saldoAwal||0) + computeTotalPemasukanSelesai() + computeKasBersih() - computeTotalPengeluaran();
+      const saldo = (state.config.saldoAwal||0) + computeTotalPemasukanSelesai() + computeKasBersih() + computeTotalManualIncome() - computeTotalPengeluaran();
       if(Number(x.total) > saldo){ toast('Saldo kas tidak cukup untuk membayar gaji.'); return; }
       if(!confirm(`Bayar gaji ${x.member_nama} sebesar ${rupiah(x.total)}? Kas akan berkurang.`)) return;
       const ex = { id:uid(), tanggal:todayISO(), itemId:null, itemNama:'GAJI', jumlah:1, hargaSatuan:Number(x.total), total:Number(x.total), keterangan:`Gaji ${x.member_nama} — ${x.periode}` };
@@ -3803,7 +3902,7 @@
     const url = (state.config.webhookPembukuan||'').trim();
     if(!url) return;
     const masuk = jenis === 'MASUK';
-    const saldoAkhir = (state.config.saldoAwal||0) + computeTotalPemasukanSelesai() + computeKasBersih() - computeTotalPengeluaran();
+    const saldoAkhir = (state.config.saldoAwal||0) + computeTotalPemasukanSelesai() + computeKasBersih() + computeTotalManualIncome() - computeTotalPengeluaran();
     const fields = [
       { name: 'Sumber', value: sumber, inline: true },
       { name: 'Nominal', value: `${masuk ? '+' : '-'}${rupiah(nominal)}`, inline: true },
