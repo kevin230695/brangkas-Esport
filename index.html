@@ -687,7 +687,6 @@
       <button type="button" class="seg-btn" data-lg="manual">➕ Pemasukan Manual</button>
     </div>
     <div id="lgPaneBuku">
-    <div class="info-box"><span class="info-icon">💡</span><span>Ini adalah <b>ringkasan kas bersih</b>: kas masuk otomatis tercatat saat pesanan berstatus <b>SELESAI</b>, kas keluar otomatis tercatat dari tab <b>Pengeluaran</b>, dan pemasukan di luar pesanan bisa dicatat di tab <b>Pemasukan Manual</b>. Kamu tidak perlu input manual di sini.</span></div>
     <div class="cashflow-grid-4">
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🏦</div><div class="kpi-body"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="lgSaldoAwal">Rp0</div></div></div>
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Total Kas Masuk</div><div class="kpi-value green" id="lgMasuk">Rp0</div></div></div>
@@ -721,7 +720,6 @@
     </div>
 
     <div id="lgPaneKotor" hidden>
-    <div class="info-box warn"><span class="info-icon">🧺</span><span>Pakai tab ini untuk mencatat uang yang sudah kamu terima tapi <b>belum resmi disetor</b> (misalnya belum masuk rekening/kasir utama). Setelah kamu tekan <b>Bersihkan</b>, nominalnya baru pindah jadi Kas Bersih dan otomatis muncul di Buku Kas. Kalau uang kotor ini langsung dipakai/dibelanjakan sebelum sempat disetor, catat sebagai <b>Pengeluaran</b> — nominalnya berkurang dari sisa uang kotor tapi tidak masuk ke Kas Bersih.</span></div>
     <div class="cashflow-grid-5">
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🏦</div><div class="kpi-body"><div class="kpi-label">Saldo Awal</div><div class="kpi-value" id="dcAwal">Rp0</div><button type="button" class="btn ghost sm" id="dcAwalBtn" style="margin-top:8px;">✏️ Ubah Saldo Awal</button></div></div>
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">📥</div><div class="kpi-body"><div class="kpi-label">Total Uang Kotor Masuk</div><div class="kpi-value green" id="dcMasuk">Rp0</div></div></div>
@@ -747,7 +745,6 @@
     </div>
 
     <div id="lgPaneManual" hidden>
-    <div class="info-box"><span class="info-icon">➕</span><span>Untuk pemasukan kas bersih di luar pesanan — misalnya top up saldo, sponsor, donasi, atau transfer dari pemilik. Setiap catatan di sini langsung dianggap kas bersih dan otomatis muncul di <b>Buku Kas</b> serta menambah <b>Saldo Kas Saat Ini</b> di Dashboard.</span></div>
     <div class="cashflow-grid-4">
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">➕</div><div class="kpi-body"><div class="kpi-label">Total Pemasukan Manual</div><div class="kpi-value green" id="miTotal">Rp0</div></div></div>
       <div class="kpi-card kpi-icon"><div class="kpi-icon-badge">🧾</div><div class="kpi-body"><div class="kpi-label">Jumlah Catatan</div><div class="kpi-value" id="miCount">0</div></div></div>
